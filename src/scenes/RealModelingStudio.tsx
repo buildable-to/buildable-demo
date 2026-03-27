@@ -1,7 +1,7 @@
-import React, { useRef, useMemo } from "react";
+import React, { useRef, useMemo, useEffect } from "react";
 import { useCurrentFrame, interpolate, staticFile } from "remotion";
 import { ThreeCanvas } from "@remotion/three";
-import { useGLTF } from "@react-three/drei";
+import { useGLTF, useThree } from "@react-three/drei";
 import * as THREE from "three";
 import { FadeIn } from "../components/FadeIn";
 import { theme } from "../theme";
@@ -18,29 +18,36 @@ function classifyMesh(name: string): "concrete" | "rebar" | "other" {
   return "other";
 }
 
-// The actual 3D model rendered with Three.js
-const BeamModel: React.FC<{
-  frame: number;
-  totalFrames: number;
-  viewMode: "normal" | "xray" | "rebar";
-}> = ({ frame, totalFrames, viewMode }) => {
-  const glb = useGLTF(staticFile("assets/beam-3d.glb"));
-  const groupRef = useRef<THREE.Group>(null);
+// Pre-create materials once to avoid recreation per frame
+const MATERIALS = {
+  normal: {
+    concrete: new THREE.MeshStandardMaterial({ color: 0xb0b0b0, roughness: 0.7, metalness: 0.1 }),
+    rebar: new THREE.MeshStandardMaterial({ color: 0xd44040, roughness: 0.5, metalness: 0.3 }),
+    other: new THREE.MeshStandardMaterial({ color: 0x404040, roughness: 0.6, metalness: 0.2 }),
+  },
+  xray: {
+    concrete: new THREE.MeshStandardMaterial({ color: 0xb0b0b0, roughness: 0.7, transparent: true, opacity: 0.15, depthWrite: false }),
+    rebar: new THREE.MeshStandardMaterial({ color: 0xff4444, roughness: 0.4, metalness: 0.4, emissive: new THREE.Color(0x330000) }),
+    other: new THREE.MeshStandardMaterial({ color: 0x606060, transparent: true, opacity: 0.3, depthWrite: false }),
+  },
+  rebar: {
+    rebar: new THREE.MeshStandardMaterial({ color: 0xff4444, roughness: 0.4, metalness: 0.4, emissive: new THREE.Color(0x330000) }),
+  },
+};
 
-  // Slow orbit camera angle
+// Camera controller — updates the ThreeCanvas camera each frame
+const CameraRig: React.FC<{ frame: number; totalFrames: number }> = ({ frame, totalFrames }) => {
+  const { camera } = useThree();
+
   const angle = interpolate(frame, [0, totalFrames], [0, Math.PI * 1.2], {
     extrapolateRight: "clamp",
   });
-
-  // Vertical look: start from slightly above, dip lower mid-video, come back
   const elevation = interpolate(
     frame,
     [0, totalFrames * 0.3, totalFrames * 0.6, totalFrames],
     [0.5, 0.2, 0.6, 0.3],
     { extrapolateRight: "clamp" }
   );
-
-  // Zoom: start medium, zoom in, pull back out
   const distance = interpolate(
     frame,
     [0, totalFrames * 0.35, totalFrames * 0.7, totalFrames],
@@ -48,74 +55,61 @@ const BeamModel: React.FC<{
     { extrapolateRight: "clamp" }
   );
 
-  // Camera position orbiting around the model
-  const camX = Math.cos(angle) * distance;
-  const camZ = Math.sin(angle) * distance;
-  const camY = elevation * distance;
+  camera.position.set(
+    Math.cos(angle) * distance,
+    elevation * distance,
+    Math.sin(angle) * distance
+  );
+  camera.lookAt(0, 0, 0);
+  camera.updateProjectionMatrix();
 
-  // Apply view mode materials
-  const scene = useMemo(() => {
+  return null;
+};
+
+// The actual 3D model
+const BeamModel: React.FC<{
+  viewMode: "normal" | "xray" | "rebar";
+}> = ({ viewMode }) => {
+  const glb = useGLTF(staticFile("assets/beam-3d.glb"));
+  const groupRef = useRef<THREE.Group>(null);
+
+  // Clone scene once, store mesh classification
+  const { clonedScene, scale, offset } = useMemo(() => {
     const cloned = glb.scene.clone(true);
+    // Tag each mesh with its classification
     cloned.traverse((child) => {
       if (child instanceof THREE.Mesh) {
-        const type = classifyMesh(child.name);
-        const mat = child.material as THREE.MeshStandardMaterial;
+        child.userData._meshType = classifyMesh(child.name);
+      }
+    });
+    // Compute centering
+    const box = new THREE.Box3().setFromObject(cloned);
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const s = 2 / maxDim;
+    return {
+      clonedScene: cloned,
+      scale: s,
+      offset: new THREE.Vector3(-center.x * s, -center.y * s, -center.z * s),
+    };
+  }, [glb.scene]);
 
+  // Apply view mode by swapping materials (no cloning)
+  useEffect(() => {
+    clonedScene.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        const type = child.userData._meshType as "concrete" | "rebar" | "other";
         if (viewMode === "normal") {
-          if (type === "concrete") {
-            child.material = new THREE.MeshStandardMaterial({
-              color: 0xb0b0b0,
-              roughness: 0.7,
-              metalness: 0.1,
-            });
-          } else if (type === "rebar") {
-            child.material = new THREE.MeshStandardMaterial({
-              color: 0xd44040,
-              roughness: 0.5,
-              metalness: 0.3,
-            });
-          } else {
-            child.material = new THREE.MeshStandardMaterial({
-              color: 0x404040,
-              roughness: 0.6,
-              metalness: 0.2,
-            });
-          }
+          child.material = MATERIALS.normal[type] || MATERIALS.normal.other;
           child.visible = true;
         } else if (viewMode === "xray") {
-          if (type === "concrete") {
-            child.material = new THREE.MeshStandardMaterial({
-              color: 0xb0b0b0,
-              roughness: 0.7,
-              metalness: 0.1,
-              transparent: true,
-              opacity: 0.15,
-              depthWrite: false,
-            });
-          } else if (type === "rebar") {
-            child.material = new THREE.MeshStandardMaterial({
-              color: 0xff4444,
-              roughness: 0.4,
-              metalness: 0.4,
-              emissive: 0x330000,
-            });
-          } else {
-            child.material = new THREE.MeshStandardMaterial({
-              color: 0x606060,
-              transparent: true,
-              opacity: 0.3,
-              depthWrite: false,
-            });
-          }
+          child.material = MATERIALS.xray[type] || MATERIALS.xray.other;
           child.visible = true;
-        } else if (viewMode === "rebar") {
+        } else {
+          // rebar only
           if (type === "rebar") {
-            child.material = new THREE.MeshStandardMaterial({
-              color: 0xff4444,
-              roughness: 0.4,
-              metalness: 0.4,
-              emissive: 0x330000,
-            });
+            child.material = MATERIALS.rebar.rebar;
             child.visible = true;
           } else {
             child.visible = false;
@@ -123,33 +117,19 @@ const BeamModel: React.FC<{
         }
       }
     });
-    return cloned;
-  }, [glb.scene, viewMode]);
-
-  // Center the model
-  const box = new THREE.Box3().setFromObject(scene);
-  const center = box.getCenter(new THREE.Vector3());
-  const size = box.getSize(new THREE.Vector3());
-  const maxDim = Math.max(size.x, size.y, size.z);
-  const scale = 2 / maxDim;
+  }, [clonedScene, viewMode]);
 
   return (
     <>
       <ambientLight intensity={0.5} />
       <directionalLight position={[5, 8, 5]} intensity={1.0} />
       <directionalLight position={[-3, 4, -3]} intensity={0.4} />
-      <perspectiveCamera
-        position={[camX, camY, camZ]}
-        fov={45}
-        near={0.1}
-        far={100}
-      />
       <group
         ref={groupRef}
         scale={[scale, scale, scale]}
-        position={[-center.x * scale, -center.y * scale, -center.z * scale]}
+        position={[offset.x, offset.y, offset.z]}
       >
-        <primitive object={scene} />
+        <primitive object={clonedScene} />
       </group>
     </>
   );
@@ -374,11 +354,8 @@ export const RealModelingStudio: React.FC = () => {
           style={{ width: "100%", height: "100%" }}
         >
           <color attach="background" args={[theme.bgViewport]} />
-          <BeamModel
-            frame={frame}
-            totalFrames={780}
-            viewMode={viewMode}
-          />
+          <CameraRig frame={frame} totalFrames={780} />
+          <BeamModel viewMode={viewMode} />
           <gridHelper args={[10, 20, "#333", "#222"]} position={[0, -1, 0]} />
         </ThreeCanvas>
 
