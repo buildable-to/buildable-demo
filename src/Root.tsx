@@ -8,12 +8,12 @@ import { Outro } from "./scenes/Outro";
 
 const FPS = 30;
 
-// Scene durations matched to voice audio (rounded up to next second + 1s buffer)
-const INTRO_S = 7;
-const PROBLEM_S = 17;
-const DESIGN_S = 29;
-const MODELING_S = 26;
-const OUTRO_S = 8;
+// Scene durations matched to voice (rounded up + 1s buffer)
+const INTRO_S = 10;
+const PROBLEM_S = 32;
+const DESIGN_S = 42;
+const MODELING_S = 28;
+const OUTRO_S = 17;
 
 const TOTAL_S = INTRO_S + PROBLEM_S + DESIGN_S + MODELING_S + OUTRO_S;
 
@@ -51,7 +51,6 @@ const BuildableDemo: React.FC = () => {
 export const RemotionRoot: React.FC = () => {
   return (
     <>
-      {/* Full demo — all scenes with voice */}
       <Composition
         id="BuildableDemo"
         component={BuildableDemo}
@@ -60,48 +59,11 @@ export const RemotionRoot: React.FC = () => {
         width={1920}
         height={1080}
       />
-
-      {/* Individual scenes for preview */}
-      <Composition
-        id="Intro"
-        component={Intro}
-        durationInFrames={INTRO_S * FPS}
-        fps={FPS}
-        width={1920}
-        height={1080}
-      />
-      <Composition
-        id="Problem"
-        component={Problem}
-        durationInFrames={PROBLEM_S * FPS}
-        fps={FPS}
-        width={1920}
-        height={1080}
-      />
-      <Composition
-        id="RealDesignStudio"
-        component={RealDesignStudio}
-        durationInFrames={DESIGN_S * FPS}
-        fps={FPS}
-        width={1920}
-        height={1080}
-      />
-      <Composition
-        id="RealModelingStudio"
-        component={RealModelingStudio}
-        durationInFrames={MODELING_S * FPS}
-        fps={FPS}
-        width={1920}
-        height={1080}
-      />
-      <Composition
-        id="Outro"
-        component={Outro}
-        durationInFrames={OUTRO_S * FPS}
-        fps={FPS}
-        width={1920}
-        height={1080}
-      />
+      <Composition id="Intro" component={Intro} durationInFrames={INTRO_S * FPS} fps={FPS} width={1920} height={1080} />
+      <Composition id="Problem" component={Problem} durationInFrames={PROBLEM_S * FPS} fps={FPS} width={1920} height={1080} />
+      <Composition id="RealDesignStudio" component={RealDesignStudio} durationInFrames={DESIGN_S * FPS} fps={FPS} width={1920} height={1080} />
+      <Composition id="RealModelingStudio" component={RealModelingStudio} durationInFrames={MODELING_S * FPS} fps={FPS} width={1920} height={1080} />
+      <Composition id="Outro" component={Outro} durationInFrames={OUTRO_S * FPS} fps={FPS} width={1920} height={1080} />
     </>
   );
 };

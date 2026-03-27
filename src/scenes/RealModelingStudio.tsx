@@ -138,7 +138,7 @@ const BeamModel: React.FC<{
 
 export const RealModelingStudio: React.FC = () => {
   const frame = useCurrentFrame();
-  // Total: 26s = 780 frames
+  // Total: 28s = 840 frames
 
   const uiOpacity = interpolate(frame, [0, 20], [0, 1], {
     extrapolateLeft: "clamp",
@@ -146,17 +146,17 @@ export const RealModelingStudio: React.FC = () => {
   });
 
   // View mode transitions synced to voice:
-  // "toggle between normal view" ~12s, "x-ray mode" ~15s, "rebar-only" ~18s
-  // 0-360: normal, 360-540: xray, 540-780: rebar only
+  // "inspect from any angle" ~6s, "x-ray mode" ~12s(360f), "rebar-only" ~16s(480f)
+  // 0-360: normal, 360-480: xray, 480-840: rebar only
   const viewMode: "normal" | "xray" | "rebar" =
-    frame < 360 ? "normal" : frame < 540 ? "xray" : "rebar";
+    frame < 360 ? "normal" : frame < 480 ? "xray" : "rebar";
 
   // View mode label
   const viewLabel =
     viewMode === "normal" ? "NORMAL" : viewMode === "xray" ? "X-RAY" : "REBAR ONLY";
 
   // Fade out at end
-  const fadeOut = interpolate(frame, [740, 780], [1, 0], {
+  const fadeOut = interpolate(frame, [800, 840], [1, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
@@ -299,10 +299,10 @@ export const RealModelingStudio: React.FC = () => {
             }}
           >
             <span style={{ color: "#c678dd" }}>import</span>{" "}
-            <span style={{ color: theme.textSecondary }}>FreeCAD</span>
+            <span style={{ color: theme.textSecondary }}>Part</span>
             <br />
-            <span style={{ color: "#c678dd" }}>import</span>{" "}
-            <span style={{ color: theme.textSecondary }}>Part, Arch</span>
+            <span style={{ color: "#c678dd" }}>from</span>{" "}
+            <span style={{ color: theme.textSecondary }}>buildable.precast</span>
             <br />
             <br />
             <span style={{ color: theme.textGhost }}># Beam: 300x500mm</span>
@@ -345,7 +345,7 @@ export const RealModelingStudio: React.FC = () => {
           style={{ width: "100%", height: "100%" }}
         >
           <color attach="background" args={[theme.bgViewport]} />
-          <CameraRig frame={frame} totalFrames={780} />
+          <CameraRig frame={frame} totalFrames={840} />
           <BeamModel viewMode={viewMode} />
           <gridHelper args={[10, 20, "#333", "#222"]} position={[0, -1, 0]} />
         </ThreeCanvas>
@@ -413,7 +413,7 @@ export const RealModelingStudio: React.FC = () => {
                 lineHeight: 1.5,
               }}
             >
-              Create a rectangular precast beam with rebars and stirrups
+              Rectangular precast beam, 300x500mm, 6 meters, with rebar and stirrups
             </div>
           </div>
 
@@ -426,13 +426,12 @@ export const RealModelingStudio: React.FC = () => {
               }}
             >
               <p style={{ fontSize: 13, color: theme.textSecondary, lineHeight: 1.6 }}>
-                I've created a <strong style={{ color: theme.textPrimary }}>rectangular beam</strong> (300×500×6000mm)
-                with 5 longitudinal rebars (3 bottom, 2 top) and 42 stirrups at 150mm spacing.
-                Bearing pads are placed at both ends.
+                Done. <strong style={{ color: theme.textPrimary }}>300×500mm beam</strong>, 6 meters,
+                5 longitudinal rebars, 42 stirrups at 150mm spacing. Bearing pads at both ends.
               </p>
               <p style={{ fontSize: 13, color: theme.textSecondary, lineHeight: 1.6, marginTop: 8 }}>
-                Use the <strong style={{ color: theme.violet }}>view mode buttons</strong> to
-                toggle between Normal, X-Ray, and Rebar Only views.
+                Toggle <strong style={{ color: theme.violet }}>X-Ray</strong> or{" "}
+                <strong style={{ color: theme.violet }}>Rebar Only</strong> to inspect reinforcement.
               </p>
             </div>
           </FadeIn>

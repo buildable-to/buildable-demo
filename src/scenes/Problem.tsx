@@ -4,13 +4,14 @@ import { theme } from "../theme";
 
 export const Problem: React.FC = () => {
   const frame = useCurrentFrame();
-  // Total: 17s = 510 frames
+  // Total: 32s = 960 frames
+  // Voice: "Engineers spend 80% of their time drafting. The same templates..."
 
-  // Counter animation: count up from 0 to 20 (frames 20-80)
-  const count = Math.min(
-    20,
+  // Animated percentage
+  const pct = Math.min(
+    80,
     Math.floor(
-      interpolate(frame, [20, 80], [0, 20], {
+      interpolate(frame, [20, 90], [0, 80], {
         extrapolateLeft: "clamp",
         extrapolateRight: "clamp",
       })
@@ -18,22 +19,25 @@ export const Problem: React.FC = () => {
   );
 
   // Progress bar
-  const barWidth = interpolate(frame, [20, 85], [0, 80], {
+  const barWidth = interpolate(frame, [20, 95], [0, 80], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
 
-  // Second section: the bottleneck items appear one by one
-  // Voice: "Connection details, fabrication plans, section views" starts ~8s in
-  const items = [
-    "Connection Details",
-    "Fabrication Plans",
-    "Section Views",
-    "Rebar Schedules",
+  // Pain point items appear sequentially synced to voice
+  // "same templates" ~3s(90f), "same beam sections" ~4.5s(135f), "same rebar" ~6s(180f)
+  const painPoints = [
+    { text: "Same templates", start: 100 },
+    { text: "Same beam sections", start: 150 },
+    { text: "Same rebar schedules", start: 200 },
+    { text: "Different numbers every time", start: 260 },
   ];
 
-  // Fade out at end
-  const fadeOut = interpolate(frame, [470, 510], [1, 0], {
+  // Cost stats — synced with "one drawing error costs $10K" ~12s(360f)
+  // "one parameter change takes hours" ~16s(480f)
+  // "75% still in AutoCAD" ~22s(660f)
+
+  const fadeOut = interpolate(frame, [920, 960], [1, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
@@ -53,24 +57,9 @@ export const Problem: React.FC = () => {
         opacity: fadeOut,
       }}
     >
-      <FadeIn startFrame={0} slideY={10}>
-        <p
-          style={{
-            fontSize: 16,
-            color: theme.textTertiary,
-            textTransform: "uppercase",
-            letterSpacing: 4,
-            marginBottom: 40,
-            fontWeight: 600,
-          }}
-        >
-          The Bottleneck
-        </p>
-      </FadeIn>
-
-      {/* Big number */}
+      {/* "80%" big number */}
       <FadeIn startFrame={10}>
-        <div style={{ textAlign: "center", marginBottom: 28 }}>
+        <div style={{ textAlign: "center", marginBottom: 24 }}>
           <span
             style={{
               fontSize: 160,
@@ -80,17 +69,7 @@ export const Problem: React.FC = () => {
               fontFamily: theme.fontMono,
             }}
           >
-            {count}
-          </span>
-          <span
-            style={{
-              fontSize: 52,
-              color: theme.textTertiary,
-              fontWeight: 300,
-              marginLeft: 14,
-            }}
-          >
-            / 25
+            {pct}%
           </span>
         </div>
       </FadeIn>
@@ -103,7 +82,7 @@ export const Problem: React.FC = () => {
             height: 14,
             borderRadius: 7,
             background: theme.bgElevated,
-            marginBottom: 36,
+            marginBottom: 20,
             overflow: "hidden",
           }}
         >
@@ -118,67 +97,81 @@ export const Problem: React.FC = () => {
         </div>
       </FadeIn>
 
-      {/* Description */}
-      <FadeIn startFrame={30}>
-        <p
-          style={{
-            fontSize: 28,
-            color: theme.textSecondary,
-            textAlign: "center",
-            lineHeight: 1.5,
-            maxWidth: 700,
-            marginBottom: 40,
-          }}
-        >
-          days spent producing{" "}
-          <strong style={{ color: theme.textPrimary }}>shop drawings</strong>{" "}
-          after winning a precast contract
+      <FadeIn startFrame={25}>
+        <p style={{ fontSize: 28, color: theme.textSecondary, marginBottom: 36 }}>
+          of an engineer's time goes to <strong style={{ color: theme.textPrimary }}>drafting</strong>
         </p>
       </FadeIn>
 
-      {/* Bottleneck items — appear one by one synced with voice */}
-      <div
-        style={{
-          display: "flex",
-          gap: 16,
-          marginTop: 10,
-        }}
-      >
-        {items.map((item, i) => {
-          // Items appear starting at ~frame 240 (8s), spaced 35 frames apart
-          const itemStart = 240 + i * 35;
-          const itemOpacity = interpolate(
-            frame,
-            [itemStart, itemStart + 15],
-            [0, 1],
-            { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
-          );
-          const itemY = interpolate(
-            frame,
-            [itemStart, itemStart + 15],
-            [12, 0],
-            { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
-          );
-
+      {/* Pain point pills */}
+      <div style={{ display: "flex", gap: 14, marginBottom: 48, flexWrap: "wrap", justifyContent: "center" }}>
+        {painPoints.map((item) => {
+          const op = interpolate(frame, [item.start, item.start + 15], [0, 1], {
+            extrapolateLeft: "clamp",
+            extrapolateRight: "clamp",
+          });
+          const y = interpolate(frame, [item.start, item.start + 15], [12, 0], {
+            extrapolateLeft: "clamp",
+            extrapolateRight: "clamp",
+          });
           return (
             <div
-              key={item}
+              key={item.text}
               style={{
-                opacity: itemOpacity,
-                transform: `translateY(${itemY}px)`,
+                opacity: op,
+                transform: `translateY(${y}px)`,
                 padding: "10px 24px",
                 borderRadius: 10,
                 border: `1px solid ${theme.borderDefault}`,
                 background: theme.bgElevated,
-                fontSize: 15,
+                fontSize: 16,
                 fontWeight: 500,
                 color: theme.textSecondary,
               }}
             >
-              {item}
+              {item.text}
             </div>
           );
         })}
+      </div>
+
+      {/* Cost stats row — appears later */}
+      <div style={{ display: "flex", gap: 40, marginTop: 10 }}>
+        {/* $10K error cost */}
+        <FadeIn startFrame={360} slideY={10}>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 48, fontWeight: 700, color: theme.error, fontFamily: theme.fontMono }}>
+              $10K+
+            </div>
+            <div style={{ fontSize: 14, color: theme.textTertiary, marginTop: 6 }}>
+              cost per drawing error
+            </div>
+          </div>
+        </FadeIn>
+
+        {/* Hours per change */}
+        <FadeIn startFrame={480} slideY={10}>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 48, fontWeight: 700, color: theme.amber, fontFamily: theme.fontMono }}>
+              3+ days
+            </div>
+            <div style={{ fontSize: 14, color: theme.textTertiary, marginTop: 6 }}>
+              per revision cycle
+            </div>
+          </div>
+        </FadeIn>
+
+        {/* 75% AutoCAD */}
+        <FadeIn startFrame={660} slideY={10}>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 48, fontWeight: 700, color: theme.textPrimary, fontFamily: theme.fontMono }}>
+              75%
+            </div>
+            <div style={{ fontSize: 14, color: theme.textTertiary, marginTop: 6 }}>
+              still using manual AutoCAD
+            </div>
+          </div>
+        </FadeIn>
       </div>
     </div>
   );

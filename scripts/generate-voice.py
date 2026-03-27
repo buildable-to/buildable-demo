@@ -7,27 +7,57 @@ import os
 VOICE = "en-US-GuyNeural"
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "..", "public", "voice")
 
-# Script for each scene — timed to match the video
 SCENES = [
     {
         "name": "intro",
-        "text": "Introducing Buildable. AI-powered design for precast concrete.",
+        "text": (
+            "Two months of drawings. "
+            "Fifteen days of construction. "
+            "That's the reality of precast concrete today."
+        ),
     },
     {
         "name": "problem",
-        "text": "After winning a contract, engineers spend twenty out of twenty-five project days just producing shop drawings. Connection details, fabrication plans, section views, rebar schedules. It's the biggest bottleneck in precast construction.",
+        "text": (
+            "Engineers spend eighty percent of their time drafting. "
+            "The same templates. The same beam sections. The same rebar schedules. "
+            "Just different numbers, every single time. "
+            "One drawing error costs ten thousand dollars in rework. "
+            "One parameter change takes hours to propagate across every sheet. "
+            "And seventy-five percent of precast companies are still doing this in AutoCAD. Manually."
+        ),
     },
     {
         "name": "design-studio",
-        "text": "With Buildable, you simply describe what you need. A beam detail, a column section, a foundation plan. The AI writes the drawing script, executes it, and renders the result in seconds. This is a real rectangular beam detail, complete with elevation view, cross-sections, rebar layout, stirrup spacing, and dimensions. Every layer follows standard CAD conventions, ready for production.",
+        "text": (
+            "Buildable changes that. "
+            "Describe your element in plain language. Dimensions, rebar, concrete class. "
+            "And get a complete, production-ready drawing in seconds. "
+            "This is a real beam detail. Elevation view, cross-sections, "
+            "rebar layout, stirrup spacing, and full dimensioning. "
+            "All following standard CAD layer conventions. Ready for the shop floor. "
+            "Change one parameter, and everything regenerates instantly. "
+            "No manual updates. No offshore coordination. No three-day revision cycles."
+        ),
     },
     {
         "name": "modeling-studio",
-        "text": "Need a three-D model for estimation? Describe the structure, and Buildable generates it using FreeCAD. Here's a real precast beam with forty-two stirrups and five longitudinal rebars. Watch as we toggle between normal view, x-ray mode to see through the concrete, and rebar-only view for reinforcement inspection. From concept to model, in minutes.",
+        "text": (
+            "Need a three-D model for cost estimation? "
+            "Describe the structure and get an interactive model you can inspect from any angle. "
+            "Toggle x-ray mode to see through the concrete and verify rebar placement. "
+            "Switch to rebar-only view for reinforcement inspection. "
+            "Everything stays in-house. Fully reproducible. "
+            "From concept to model in minutes, not weeks."
+        ),
     },
     {
         "name": "outro",
-        "text": "Buildable. From description to drawing. In minutes, not weeks.",
+        "text": (
+            "A hundred and fifty billion dollar industry. "
+            "Eighty percent of project time on repetitive drawings. "
+            "Buildable. One description. Construction-ready output. In minutes."
+        ),
     },
 ]
 
@@ -44,7 +74,6 @@ async def generate():
         print(f"  -> {output_path}")
 
     print("\nAll voice files generated in", OUTPUT_DIR)
-    print("Files:", os.listdir(OUTPUT_DIR))
 
 
 if __name__ == "__main__":

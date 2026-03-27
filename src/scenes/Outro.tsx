@@ -4,18 +4,18 @@ import { theme } from "../theme";
 
 export const Outro: React.FC = () => {
   const frame = useCurrentFrame();
-  // Total: 8s = 240 frames
+  // Total: 17s = 510 frames
+  // Voice: "$150B industry. 80% of project time on repetitive drawings. Buildable. One description. Construction-ready output. In minutes."
 
-  const logoScale = interpolate(frame, [0, 25], [0.8, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
   const logoOpacity = interpolate(frame, [0, 20], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
-
-  const glowSize = interpolate(frame, [20, 150], [0, 60], {
+  const logoScale = interpolate(frame, [0, 25], [0.8, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+  const glowSize = interpolate(frame, [20, 200], [0, 60], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
@@ -33,56 +33,70 @@ export const Outro: React.FC = () => {
         fontFamily: theme.fontUi,
       }}
     >
+      {/* $150B stat — first voice beat */}
+      <FadeIn startFrame={5} slideY={10}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 8 }}>
+          <span
+            style={{
+              fontSize: 72,
+              fontWeight: 700,
+              color: theme.accent,
+              fontFamily: theme.fontMono,
+              lineHeight: 1,
+            }}
+          >
+            $150B
+          </span>
+          <span style={{ fontSize: 22, color: theme.textTertiary }}>industry</span>
+        </div>
+      </FadeIn>
+
+      {/* 80% stat */}
+      <FadeIn startFrame={60}>
+        <p style={{ fontSize: 20, color: theme.textSecondary, marginBottom: 48 }}>
+          80% of project time spent on repetitive drawings
+        </p>
+      </FadeIn>
+
       {/* Logo */}
       <div
         style={{
           opacity: logoOpacity,
           transform: `scale(${logoScale})`,
           filter: `drop-shadow(0 0 ${glowSize}px rgba(120, 130, 255, 0.25))`,
-          marginBottom: 32,
+          marginBottom: 24,
         }}
       >
-        <Img
-          src={staticFile("assets/logo.png")}
-          style={{ width: 100, height: 100 }}
-        />
+        <Img src={staticFile("assets/logo.png")} style={{ width: 90, height: 90 }} />
       </div>
 
-      <FadeIn startFrame={10} slideY={12}>
+      {/* Buildable title */}
+      <FadeIn startFrame={150} slideY={12}>
         <h1
           style={{
-            fontSize: 60,
+            fontSize: 56,
             fontWeight: 700,
             color: theme.textPrimary,
             letterSpacing: "-1px",
-            marginBottom: 20,
-            textAlign: "center",
+            marginBottom: 16,
           }}
         >
           Buildable
         </h1>
       </FadeIn>
 
-      {/* Voice: "From description to drawing. In minutes, not weeks." */}
-      <FadeIn startFrame={30}>
-        <p
-          style={{
-            fontSize: 24,
-            color: theme.textSecondary,
-            textAlign: "center",
-            lineHeight: 1.6,
-            maxWidth: 500,
-          }}
-        >
-          From description to drawing.
+      {/* Tagline — matches voice */}
+      <FadeIn startFrame={180}>
+        <p style={{ fontSize: 24, color: theme.textSecondary, textAlign: "center", lineHeight: 1.6 }}>
+          One description. Construction-ready output.
           <br />
-          <span style={{ color: theme.accent }}>In minutes, not weeks.</span>
+          <span style={{ color: theme.accent, fontWeight: 500 }}>In minutes.</span>
         </p>
       </FadeIn>
 
       {/* Feature pills */}
-      <FadeIn startFrame={60} slideY={10}>
-        <div style={{ display: "flex", gap: 12, marginTop: 40 }}>
+      <FadeIn startFrame={240} slideY={10}>
+        <div style={{ display: "flex", gap: 12, marginTop: 36 }}>
           {[
             { label: "2D Drawings", color: theme.accent },
             { label: "3D Models", color: theme.violet },
@@ -106,10 +120,10 @@ export const Outro: React.FC = () => {
         </div>
       </FadeIn>
 
-      <FadeIn startFrame={90}>
+      <FadeIn startFrame={300}>
         <p
           style={{
-            marginTop: 50,
+            marginTop: 44,
             fontSize: 16,
             color: theme.textTertiary,
             fontFamily: theme.fontMono,

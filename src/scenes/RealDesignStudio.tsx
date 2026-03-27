@@ -6,7 +6,7 @@ import { theme } from "../theme";
 
 export const RealDesignStudio: React.FC = () => {
   const frame = useCurrentFrame();
-  // Total: 29s = 870 frames
+  // Total: 42s = 1260 frames
 
   const [svgContent, setSvgContent] = useState<string>("");
   const [handle] = useState(() => delayRender("Loading SVG"));
@@ -50,13 +50,13 @@ export const RealDesignStudio: React.FC = () => {
   // Pan & zoom animation on the SVG
   const svgScale = interpolate(
     frame,
-    [thinkingStart + 30, thinkingStart + 100, thinkingStart + 300, thinkingStart + 500, 830],
+    [thinkingStart + 30, thinkingStart + 100, thinkingStart + 400, thinkingStart + 700, 1200],
     [1.2, 1.0, 1.15, 1.05, 1.0],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
   const svgPanX = interpolate(
     frame,
-    [thinkingStart + 30, thinkingStart + 150, thinkingStart + 350, thinkingStart + 500, 830],
+    [thinkingStart + 30, thinkingStart + 150, thinkingStart + 450, thinkingStart + 700, 1200],
     [100, 0, -60, 30, 0],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
@@ -71,7 +71,7 @@ export const RealDesignStudio: React.FC = () => {
     );
 
   // Fade out at end
-  const fadeOut = interpolate(frame, [830, 870], [1, 0], {
+  const fadeOut = interpolate(frame, [1220, 1260], [1, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
@@ -375,9 +375,9 @@ export const RealDesignStudio: React.FC = () => {
                 {frame > thinkingStart + 100 && (
                   <FadeIn startFrame={thinkingStart + 100} slideY={4}>
                     <p style={{ fontSize: 13, color: theme.textSecondary, lineHeight: 1.6 }}>
-                      I've created a <strong style={{ color: theme.textPrimary }}>rectangular beam detail</strong> with
-                      elevation and cross-section views showing longitudinal rebars, stirrups at 150mm spacing,
-                      concrete cover dimensions, and section callouts.
+                      Done. <strong style={{ color: theme.textPrimary }}>Rectangular beam detail</strong> — elevation
+                      view, cross-sections, rebar layout, stirrup spacing, and full dimensioning.
+                      All layers follow standard conventions. Ready for production.
                     </p>
                   </FadeIn>
                 )}
