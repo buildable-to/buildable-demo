@@ -4,6 +4,7 @@ import { Intro } from "./scenes/Intro";
 import { Problem } from "./scenes/Problem";
 import { RealDesignStudio } from "./scenes/RealDesignStudio";
 import { RealModelingStudio } from "./scenes/RealModelingStudio";
+import { WarehouseScene } from "./scenes/WarehouseScene";
 import { Outro } from "./scenes/Outro";
 
 const FPS = 30;
@@ -12,22 +13,24 @@ const FPS = 30;
 const INTRO_S = 10;
 const PROBLEM_S = 32;
 const DESIGN_S = 42;
-const MODELING_S = 28;
+const MODELING_S = 19;
+const WAREHOUSE_S = 26;
 const OUTRO_S = 17;
 
-const TOTAL_S = INTRO_S + PROBLEM_S + DESIGN_S + MODELING_S + OUTRO_S;
+const TOTAL_S = INTRO_S + PROBLEM_S + DESIGN_S + MODELING_S + WAREHOUSE_S + OUTRO_S;
 
 const voiceFiles = [
   "voice/intro.mp3",
   "voice/problem.mp3",
   "voice/design-studio.mp3",
   "voice/modeling-studio.mp3",
+  "voice/warehouse.mp3",
   "voice/outro.mp3",
 ];
 
 const BuildableDemo: React.FC = () => {
-  const sceneDurations = [INTRO_S, PROBLEM_S, DESIGN_S, MODELING_S, OUTRO_S];
-  const scenes = [Intro, Problem, RealDesignStudio, RealModelingStudio, Outro];
+  const sceneDurations = [INTRO_S, PROBLEM_S, DESIGN_S, MODELING_S, WAREHOUSE_S, OUTRO_S];
+  const scenes = [Intro, Problem, RealDesignStudio, RealModelingStudio, WarehouseScene, Outro];
 
   let offset = 0;
   const sceneEntries = scenes.map((Component, i) => {
@@ -63,6 +66,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition id="Problem" component={Problem} durationInFrames={PROBLEM_S * FPS} fps={FPS} width={1920} height={1080} />
       <Composition id="RealDesignStudio" component={RealDesignStudio} durationInFrames={DESIGN_S * FPS} fps={FPS} width={1920} height={1080} />
       <Composition id="RealModelingStudio" component={RealModelingStudio} durationInFrames={MODELING_S * FPS} fps={FPS} width={1920} height={1080} />
+      <Composition id="WarehouseScene" component={WarehouseScene} durationInFrames={WAREHOUSE_S * FPS} fps={FPS} width={1920} height={1080} />
       <Composition id="Outro" component={Outro} durationInFrames={OUTRO_S * FPS} fps={FPS} width={1920} height={1080} />
     </>
   );

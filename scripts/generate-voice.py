@@ -43,12 +43,21 @@ SCENES = [
     {
         "name": "modeling-studio",
         "text": (
-            "Need a three-D model for cost estimation? "
-            "Describe the structure and get an interactive model you can inspect from any angle. "
+            "For detailed engineering, describe an element and inspect it from any angle. "
             "Toggle x-ray mode to see through the concrete and verify rebar placement. "
             "Switch to rebar-only view for reinforcement inspection. "
-            "Everything stays in-house. Fully reproducible. "
-            "From concept to model in minutes, not weeks."
+            "Every element, fully reproducible."
+        ),
+    },
+    {
+        "name": "warehouse",
+        "text": (
+            "Before committing to a project, management needs a quick three-D model "
+            "for cost estimation and client presentations. "
+            "Describe the structure — dimensions, bays, element types — "
+            "and get a complete building model with over a hundred sixty precast elements. "
+            "Columns, beams, purlins, roof panels, wall panels, foundations. "
+            "All in minutes, ready to share with your client."
         ),
     },
     {
