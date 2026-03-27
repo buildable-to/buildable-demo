@@ -66,7 +66,7 @@ SCENES = [
             "A hundred and fifty billion dollar industry. "
             "Eighty percent of project time on repetitive drawings. "
             "Buildable. Accelerate precast engineering. "
-            "Stop redrawing. Start building."
+            "Reduce project timelines, two to three times."
         ),
     },
 ]

@@ -81,7 +81,7 @@ export const Outro: React.FC = () => {
 
       <FadeIn startFrame={195}>
         <p style={{ fontSize: 26, color: theme.textPrimary, fontWeight: 500, marginTop: 8 }}>
-          Stop redrawing. Start building.
+          Reduce project timelines 2-3x.
         </p>
       </FadeIn>
 
