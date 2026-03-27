@@ -1,7 +1,8 @@
 import React, { useRef, useMemo, useEffect } from "react";
 import { useCurrentFrame, interpolate, staticFile } from "remotion";
 import { ThreeCanvas } from "@remotion/three";
-import { useGLTF, useThree } from "@react-three/drei";
+import { useGLTF } from "@react-three/drei";
+import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { FadeIn } from "../components/FadeIn";
 import { theme } from "../theme";
