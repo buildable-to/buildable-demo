@@ -365,6 +365,8 @@ export const RealModelingStudio: React.FC = () => {
       >
         {/* Three.js canvas */}
         <ThreeCanvas
+          width={1320}
+          height={1036}
           camera={{
             fov: 45,
             position: [3, 1.5, 3],
