@@ -179,35 +179,35 @@ export const RealModelingStudio: React.FC = () => {
           top: 0,
           left: 0,
           right: 0,
-          height: 44,
+          height: 88,
           background: theme.bgSidebar,
-          borderBottom: `1px solid ${theme.borderDefault}`,
+          borderBottom: `2px solid ${theme.borderDefault}`,
           display: "flex",
           alignItems: "center",
-          padding: "0 16px",
+          padding: "0 32px",
           zIndex: 10,
         }}
       >
         <Img
           src={staticFile("assets/logo.png")}
-          style={{ width: 28, height: 28, marginRight: 10 }}
+          style={{ width: 56, height: 56, marginRight: 20 }}
         />
-        <span style={{ color: theme.textPrimary, fontWeight: 600, fontSize: 14, marginRight: 12 }}>
+        <span style={{ color: theme.textPrimary, fontWeight: 600, fontSize: 28, marginRight: 24 }}>
           Buildable
         </span>
-        <span style={{ color: theme.borderStrong, margin: "0 8px" }}>|</span>
-        <span style={{ color: theme.textSecondary, fontSize: 13 }}>3D Modeling Studio</span>
+        <span style={{ color: theme.borderStrong, margin: "0 16px" }}>|</span>
+        <span style={{ color: theme.textSecondary, fontSize: 26 }}>3D Modeling Studio</span>
 
         {/* View mode buttons */}
         <div
           style={{
             marginLeft: "auto",
             display: "flex",
-            gap: 2,
+            gap: 4,
             background: theme.bgElevated,
-            borderRadius: 8,
-            padding: 2,
-            border: `1px solid ${theme.borderSubtle}`,
+            borderRadius: 16,
+            padding: 4,
+            border: `2px solid ${theme.borderSubtle}`,
           }}
         >
           {(["Normal", "X-Ray", "Rebar"] as const).map((mode, i) => {
@@ -219,10 +219,10 @@ export const RealModelingStudio: React.FC = () => {
               <div
                 key={mode}
                 style={{
-                  padding: "4px 12px",
-                  fontSize: 11,
+                  padding: "8px 24px",
+                  fontSize: 22,
                   fontWeight: 500,
-                  borderRadius: 6,
+                  borderRadius: 12,
                   color: isActive ? theme.textPrimary : theme.textTertiary,
                   background: isActive ? theme.bgActive : "transparent",
                 }}
@@ -237,20 +237,20 @@ export const RealModelingStudio: React.FC = () => {
       {/* Left sidebar — Model info */}
       <div
         style={{
-          width: 200,
-          marginTop: 44,
+          width: 400,
+          marginTop: 88,
           background: theme.bgSidebar,
-          borderRight: `1px solid ${theme.borderDefault}`,
-          padding: "12px 0",
+          borderRight: `2px solid ${theme.borderDefault}`,
+          padding: "24px 0",
         }}
       >
         <div
           style={{
-            padding: "0 12px 8px",
-            fontSize: 10,
+            padding: "0 24px 16px",
+            fontSize: 20,
             fontWeight: 600,
             textTransform: "uppercase",
-            letterSpacing: 1.5,
+            letterSpacing: 3,
             color: theme.textTertiary,
           }}
         >
@@ -260,21 +260,21 @@ export const RealModelingStudio: React.FC = () => {
           style={{
             display: "flex",
             alignItems: "center",
-            padding: "8px 12px",
-            fontSize: 12,
+            padding: "16px 24px",
+            fontSize: 24,
             color: theme.textPrimary,
             background: theme.bgActive,
-            borderLeft: `2px solid ${theme.violet}`,
+            borderLeft: `4px solid ${theme.violet}`,
           }}
         >
-          <span style={{ marginRight: 8, fontSize: 14 }}>📦</span>
+          <span style={{ marginRight: 16, fontSize: 28 }}>📦</span>
           Rectangular Beam
         </div>
 
         {/* Model details */}
-        <FadeIn startFrame={60} slideY={5}>
-          <div style={{ padding: "12px 14px", marginTop: 8 }}>
-            <div style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1.5, color: theme.textTertiary, marginBottom: 8 }}>
+        <FadeIn startFrame={60} slideY={10}>
+          <div style={{ padding: "24px 28px", marginTop: 16 }}>
+            <div style={{ fontSize: 20, fontWeight: 600, textTransform: "uppercase", letterSpacing: 3, color: theme.textTertiary, marginBottom: 16 }}>
               Details
             </div>
             {[
@@ -284,9 +284,9 @@ export const RealModelingStudio: React.FC = () => {
               { label: "Stirrups", value: "42 @ 150mm" },
               { label: "Bearing", value: "Pads × 2" },
             ].map((item) => (
-              <div key={item.label} style={{ display: "flex", justifyContent: "space-between", padding: "3px 0", fontSize: 10, color: theme.textSecondary }}>
+              <div key={item.label} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", fontSize: 20, color: theme.textSecondary }}>
                 <span style={{ color: theme.textTertiary }}>{item.label}</span>
-                <span style={{ fontFamily: theme.fontMono, fontSize: 10 }}>{item.value}</span>
+                <span style={{ fontFamily: theme.fontMono, fontSize: 20 }}>{item.value}</span>
               </div>
             ))}
           </div>
@@ -297,7 +297,7 @@ export const RealModelingStudio: React.FC = () => {
       <div
         style={{
           flex: 1,
-          marginTop: 44,
+          marginTop: 88,
           background: viewMode === "xray"
             ? `linear-gradient(180deg, #0d1520, ${theme.bgViewport})`
             : theme.bgViewport,
@@ -306,8 +306,8 @@ export const RealModelingStudio: React.FC = () => {
       >
         {/* Three.js canvas */}
         <ThreeCanvas
-          width={1320}
-          height={1036}
+          width={2640}
+          height={2072}
           camera={{
             fov: 45,
             position: [3, 1.5, 3],
@@ -324,18 +324,18 @@ export const RealModelingStudio: React.FC = () => {
         <div
           style={{
             position: "absolute",
-            top: 16,
-            left: 16,
-            fontSize: 11,
+            top: 32,
+            left: 32,
+            fontSize: 22,
             fontFamily: theme.fontMono,
             color: viewMode === "normal" ? theme.textTertiary : theme.violet,
             background:
               viewMode === "normal"
                 ? theme.bgElevated
                 : "rgba(155, 122, 255, 0.1)",
-            border: `1px solid ${viewMode === "normal" ? theme.borderDefault : "rgba(155, 122, 255, 0.3)"}`,
-            padding: "4px 10px",
-            borderRadius: 6,
+            border: `2px solid ${viewMode === "normal" ? theme.borderDefault : "rgba(155, 122, 255, 0.3)"}`,
+            padding: "8px 20px",
+            borderRadius: 12,
           }}
         >
           {viewLabel}
@@ -345,40 +345,40 @@ export const RealModelingStudio: React.FC = () => {
       {/* Right — Chat Panel */}
       <div
         style={{
-          width: 400,
-          marginTop: 44,
+          width: 800,
+          marginTop: 88,
           background: theme.bgSurface,
-          borderLeft: `1px solid ${theme.borderDefault}`,
+          borderLeft: `2px solid ${theme.borderDefault}`,
           display: "flex",
           flexDirection: "column",
         }}
       >
         <div
           style={{
-            padding: "12px 16px 8px",
-            fontSize: 10,
+            padding: "24px 32px 16px",
+            fontSize: 20,
             fontWeight: 600,
             textTransform: "uppercase",
-            letterSpacing: 1.5,
+            letterSpacing: 3,
             color: theme.textTertiary,
             display: "flex",
             alignItems: "center",
-            gap: 6,
+            gap: 12,
           }}
         >
           <span style={{ color: theme.violet }}>●</span> AI Assistant
         </div>
 
-        <div style={{ flex: 1, padding: "8px 16px" }}>
+        <div style={{ flex: 1, padding: "16px 32px" }}>
           {/* User message */}
-          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 24 }}>
             <div
               style={{
                 background: theme.violet,
                 color: "white",
-                padding: "10px 14px",
-                borderRadius: "16px 16px 4px 16px",
-                fontSize: 13,
+                padding: "20px 28px",
+                borderRadius: "32px 32px 8px 32px",
+                fontSize: 26,
                 maxWidth: "85%",
                 lineHeight: 1.5,
               }}
@@ -388,18 +388,18 @@ export const RealModelingStudio: React.FC = () => {
           </div>
 
           {/* Agent response */}
-          <FadeIn startFrame={10} slideY={6}>
+          <FadeIn startFrame={10} slideY={12}>
             <div
               style={{
-                borderLeft: "2px solid rgba(155, 122, 255, 0.4)",
-                padding: "8px 12px",
+                borderLeft: "4px solid rgba(155, 122, 255, 0.4)",
+                padding: "16px 24px",
               }}
             >
-              <p style={{ fontSize: 13, color: theme.textSecondary, lineHeight: 1.6 }}>
+              <p style={{ fontSize: 26, color: theme.textSecondary, lineHeight: 1.6 }}>
                 Done. <strong style={{ color: theme.textPrimary }}>300×500mm beam</strong>, 6 meters,
                 5 longitudinal rebars, 42 stirrups at 150mm spacing. Bearing pads at both ends.
               </p>
-              <p style={{ fontSize: 13, color: theme.textSecondary, lineHeight: 1.6, marginTop: 8 }}>
+              <p style={{ fontSize: 26, color: theme.textSecondary, lineHeight: 1.6, marginTop: 16 }}>
                 Toggle <strong style={{ color: theme.violet }}>X-Ray</strong> or{" "}
                 <strong style={{ color: theme.violet }}>Rebar Only</strong> to inspect reinforcement.
               </p>
@@ -408,14 +408,14 @@ export const RealModelingStudio: React.FC = () => {
         </div>
 
         {/* Chat input */}
-        <div style={{ padding: "12px 16px", borderTop: `1px solid ${theme.borderFaint}` }}>
+        <div style={{ padding: "24px 32px", borderTop: `2px solid ${theme.borderFaint}` }}>
           <div
             style={{
               background: theme.bgElevated,
-              border: `1px solid ${theme.borderDefault}`,
-              borderRadius: 12,
-              padding: "10px 14px",
-              fontSize: 13,
+              border: `2px solid ${theme.borderDefault}`,
+              borderRadius: 24,
+              padding: "20px 28px",
+              fontSize: 26,
               color: theme.textGhost,
               display: "flex",
               alignItems: "center",
@@ -423,7 +423,7 @@ export const RealModelingStudio: React.FC = () => {
             }}
           >
             <span>Describe a 3D model...</span>
-            <span style={{ color: theme.violet, fontSize: 16 }}>↑</span>
+            <span style={{ color: theme.violet, fontSize: 32 }}>↑</span>
           </div>
         </div>
       </div>

@@ -54,13 +54,13 @@ const BuildableDemo: React.FC = () => {
 export const RemotionRoot: React.FC = () => {
   return (
     <>
-      <Composition id="BuildableDemo" component={BuildableDemo} durationInFrames={TOTAL_S * FPS} fps={FPS} width={1920} height={1080} />
-      <Composition id="Intro" component={Intro} durationInFrames={INTRO_S * FPS} fps={FPS} width={1920} height={1080} />
-      <Composition id="Problem" component={Problem} durationInFrames={PROBLEM_S * FPS} fps={FPS} width={1920} height={1080} />
-      <Composition id="RealDesignStudio" component={RealDesignStudio} durationInFrames={DESIGN_S * FPS} fps={FPS} width={1920} height={1080} />
-      <Composition id="RealModelingStudio" component={RealModelingStudio} durationInFrames={MODELING_S * FPS} fps={FPS} width={1920} height={1080} />
-      <Composition id="WarehouseScene" component={WarehouseScene} durationInFrames={WAREHOUSE_S * FPS} fps={FPS} width={1920} height={1080} />
-      <Composition id="Outro" component={Outro} durationInFrames={OUTRO_S * FPS} fps={FPS} width={1920} height={1080} />
+      <Composition id="BuildableDemo" component={BuildableDemo} durationInFrames={TOTAL_S * FPS} fps={FPS} width={3840} height={2160} />
+      <Composition id="Intro" component={Intro} durationInFrames={INTRO_S * FPS} fps={FPS} width={3840} height={2160} />
+      <Composition id="Problem" component={Problem} durationInFrames={PROBLEM_S * FPS} fps={FPS} width={3840} height={2160} />
+      <Composition id="RealDesignStudio" component={RealDesignStudio} durationInFrames={DESIGN_S * FPS} fps={FPS} width={3840} height={2160} />
+      <Composition id="RealModelingStudio" component={RealModelingStudio} durationInFrames={MODELING_S * FPS} fps={FPS} width={3840} height={2160} />
+      <Composition id="WarehouseScene" component={WarehouseScene} durationInFrames={WAREHOUSE_S * FPS} fps={FPS} width={3840} height={2160} />
+      <Composition id="Outro" component={Outro} durationInFrames={OUTRO_S * FPS} fps={FPS} width={3840} height={2160} />
     </>
   );
 };

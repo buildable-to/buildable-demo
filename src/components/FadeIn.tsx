@@ -6,7 +6,7 @@ export const FadeIn: React.FC<{
   duration?: number;
   slideY?: number;
   style?: React.CSSProperties;
-}> = ({ children, startFrame, duration = 15, slideY = 20, style }) => {
+}> = ({ children, startFrame, duration = 15, slideY = 40, style }) => {
   const frame = useCurrentFrame();
   const opacity = interpolate(frame, [startFrame, startFrame + duration], [0, 1], {
     extrapolateLeft: "clamp",

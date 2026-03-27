@@ -14,7 +14,7 @@ export const Outro: React.FC = () => {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
-  const glowSize = interpolate(frame, [20, 200], [0, 50], {
+  const glowSize = interpolate(frame, [20, 200], [0, 100], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
@@ -33,8 +33,8 @@ export const Outro: React.FC = () => {
       }}
     >
       {/* $150B stat */}
-      <FadeIn startFrame={5} slideY={10}>
-        <p style={{ fontSize: 20, color: theme.textTertiary, marginBottom: 4, fontWeight: 400, letterSpacing: "0.5px" }}>
+      <FadeIn startFrame={5} slideY={20}>
+        <p style={{ fontSize: 40, color: theme.textTertiary, marginBottom: 8, fontWeight: 400, letterSpacing: "1px" }}>
           A <span style={{ fontFamily: theme.fontMono, fontWeight: 600, color: theme.textSecondary }}>$150B</span> industry.{" "}
           <span style={{ fontFamily: theme.fontMono, fontWeight: 600, color: theme.textSecondary }}>80%</span> of time on repetitive drawings.
         </p>
@@ -42,7 +42,7 @@ export const Outro: React.FC = () => {
 
       {/* Divider */}
       <FadeIn startFrame={60}>
-        <div style={{ width: 40, height: 1, background: theme.borderDefault, margin: "28px 0" }} />
+        <div style={{ width: 80, height: 2, background: theme.borderDefault, margin: "56px 0" }} />
       </FadeIn>
 
       {/* Logo */}
@@ -51,21 +51,21 @@ export const Outro: React.FC = () => {
           opacity: logoOpacity,
           transform: `scale(${logoScale})`,
           filter: `drop-shadow(0 0 ${glowSize}px ${theme.accentGlowStrong})`,
-          marginBottom: 20,
+          marginBottom: 40,
         }}
       >
-        <Img src={staticFile("assets/logo.png")} style={{ width: 80, height: 80 }} />
+        <Img src={staticFile("assets/logo.png")} style={{ width: 160, height: 160 }} />
       </div>
 
       {/* Buildable title */}
-      <FadeIn startFrame={120} slideY={10}>
+      <FadeIn startFrame={120} slideY={20}>
         <h1
           style={{
-            fontSize: 60,
+            fontSize: 120,
             fontWeight: 700,
             color: theme.textPrimary,
-            letterSpacing: "-1.5px",
-            marginBottom: 12,
+            letterSpacing: "-3px",
+            marginBottom: 24,
           }}
         >
           Buildable
@@ -74,13 +74,13 @@ export const Outro: React.FC = () => {
 
       {/* Tagline */}
       <FadeIn startFrame={150}>
-        <p style={{ fontSize: 22, color: theme.textTertiary, fontWeight: 300 }}>
+        <p style={{ fontSize: 44, color: theme.textTertiary, fontWeight: 300 }}>
           Accelerate precast engineering.
         </p>
       </FadeIn>
 
       <FadeIn startFrame={195}>
-        <p style={{ fontSize: 26, color: theme.textPrimary, fontWeight: 500, marginTop: 8 }}>
+        <p style={{ fontSize: 52, color: theme.textPrimary, fontWeight: 500, marginTop: 16 }}>
           Reduce project timelines 2-3x.
         </p>
       </FadeIn>
@@ -88,8 +88,8 @@ export const Outro: React.FC = () => {
       <FadeIn startFrame={270}>
         <p
           style={{
-            marginTop: 48,
-            fontSize: 15,
+            marginTop: 96,
+            fontSize: 30,
             color: theme.textGhost,
             fontFamily: theme.fontMono,
             fontWeight: 400,

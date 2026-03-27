@@ -20,8 +20,8 @@ export const TypeWriter: React.FC<{
       {showCursor && (
         <span
           style={{
-            borderRight: `2px solid ${cursorColor || theme.accent}`,
-            marginLeft: 1,
+            borderRight: `4px solid ${cursorColor || theme.accent}`,
+            marginLeft: 2,
             animation: "none",
           }}
         >

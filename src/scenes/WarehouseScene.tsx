@@ -148,43 +148,43 @@ export const WarehouseScene: React.FC = () => {
           top: 0,
           left: 0,
           right: 0,
-          height: 44,
+          height: 88,
           background: theme.bgSidebar,
-          borderBottom: `1px solid ${theme.borderDefault}`,
+          borderBottom: `2px solid ${theme.borderDefault}`,
           display: "flex",
           alignItems: "center",
-          padding: "0 16px",
+          padding: "0 32px",
           zIndex: 10,
         }}
       >
         <Img
           src={staticFile("assets/logo.png")}
-          style={{ width: 28, height: 28, marginRight: 10 }}
+          style={{ width: 56, height: 56, marginRight: 20 }}
         />
-        <span style={{ color: theme.textPrimary, fontWeight: 600, fontSize: 14, marginRight: 12 }}>
+        <span style={{ color: theme.textPrimary, fontWeight: 600, fontSize: 28, marginRight: 24 }}>
           Buildable
         </span>
-        <span style={{ color: theme.borderStrong, margin: "0 8px" }}>|</span>
-        <span style={{ color: theme.textSecondary, fontSize: 13 }}>3D Modeling Studio</span>
+        <span style={{ color: theme.borderStrong, margin: "0 16px" }}>|</span>
+        <span style={{ color: theme.textSecondary, fontSize: 26 }}>3D Modeling Studio</span>
       </div>
 
       {/* Left sidebar — context */}
       <div
         style={{
-          width: 220,
-          marginTop: 44,
+          width: 440,
+          marginTop: 88,
           background: theme.bgSidebar,
-          borderRight: `1px solid ${theme.borderDefault}`,
-          padding: "16px 0",
+          borderRight: `2px solid ${theme.borderDefault}`,
+          padding: "32px 0",
         }}
       >
         <div
           style={{
-            padding: "0 14px 10px",
-            fontSize: 10,
+            padding: "0 28px 20px",
+            fontSize: 20,
             fontWeight: 600,
             textTransform: "uppercase",
-            letterSpacing: 1.5,
+            letterSpacing: 3,
             color: theme.textTertiary,
           }}
         >
@@ -194,27 +194,27 @@ export const WarehouseScene: React.FC = () => {
           style={{
             display: "flex",
             alignItems: "center",
-            padding: "8px 14px",
-            fontSize: 12,
+            padding: "16px 28px",
+            fontSize: 24,
             color: theme.textPrimary,
             background: theme.bgActive,
-            borderLeft: `2px solid ${theme.violet}`,
+            borderLeft: `4px solid ${theme.violet}`,
           }}
         >
-          <span style={{ marginRight: 8, fontSize: 14 }}>🏭</span>
+          <span style={{ marginRight: 16, fontSize: 28 }}>🏭</span>
           Precast Warehouse
         </div>
 
         {/* Element breakdown with costs */}
-        <div style={{ padding: "16px 14px 0" }}>
+        <div style={{ padding: "32px 28px 0" }}>
           <div
             style={{
-              fontSize: 10,
+              fontSize: 20,
               fontWeight: 600,
               textTransform: "uppercase",
-              letterSpacing: 1.5,
+              letterSpacing: 3,
               color: theme.textTertiary,
-              marginBottom: 10,
+              marginBottom: 20,
             }}
           >
             Cost Estimate
@@ -239,23 +239,23 @@ export const WarehouseScene: React.FC = () => {
                 key={el.name}
                 style={{
                   opacity: lineOp,
-                  transform: `translateY(${(1 - lineOp) * 4}px)`,
+                  transform: `translateY(${(1 - lineOp) * 8}px)`,
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  padding: "3px 0",
-                  fontSize: 10,
+                  padding: "6px 0",
+                  fontSize: 20,
                   color: theme.textSecondary,
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                  <div style={{ width: 5, height: 5, borderRadius: 1, background: el.color }} />
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 10, height: 10, borderRadius: 2, background: el.color }} />
                   <span>{el.name}</span>
-                  <span style={{ color: theme.textGhost, fontFamily: theme.fontMono, fontSize: 9 }}>
+                  <span style={{ color: theme.textGhost, fontFamily: theme.fontMono, fontSize: 18 }}>
                     ×{el.count}
                   </span>
                 </div>
-                <span style={{ fontFamily: theme.fontMono, fontSize: 10, color: theme.textTertiary }}>
+                <span style={{ fontFamily: theme.fontMono, fontSize: 20, color: theme.textTertiary }}>
                   ${lineTotal.toLocaleString()}
                 </span>
               </div>
@@ -265,9 +265,9 @@ export const WarehouseScene: React.FC = () => {
           {/* Divider */}
           <div
             style={{
-              height: 1,
+              height: 2,
               background: theme.borderDefault,
-              margin: "8px 0",
+              margin: "16px 0",
               opacity: interpolate(frame, [185, 200], [0, 1], {
                 extrapolateLeft: "clamp",
                 extrapolateRight: "clamp",
@@ -296,16 +296,16 @@ export const WarehouseScene: React.FC = () => {
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  padding: "2px 0",
+                  padding: "4px 0",
                 }}
               >
-                <span style={{ fontSize: 11, fontWeight: 600, color: theme.textPrimary }}>
+                <span style={{ fontSize: 22, fontWeight: 600, color: theme.textPrimary }}>
                   Estimated Total
                 </span>
                 <span
                   style={{
                     fontFamily: theme.fontMono,
-                    fontSize: 13,
+                    fontSize: 26,
                     fontWeight: 700,
                     color: theme.green,
                   }}
@@ -317,23 +317,23 @@ export const WarehouseScene: React.FC = () => {
           })()}
 
           {/* Per-sqm cost */}
-          <FadeIn startFrame={260} slideY={3}>
+          <FadeIn startFrame={260} slideY={6}>
             <div
               style={{
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                padding: "2px 0",
-                marginTop: 2,
+                padding: "4px 0",
+                marginTop: 4,
               }}
             >
-              <span style={{ fontSize: 10, color: theme.textTertiary }}>
+              <span style={{ fontSize: 20, color: theme.textTertiary }}>
                 Per m² (1,210 m²)
               </span>
               <span
                 style={{
                   fontFamily: theme.fontMono,
-                  fontSize: 10,
+                  fontSize: 20,
                   color: theme.textTertiary,
                 }}
               >
@@ -343,24 +343,24 @@ export const WarehouseScene: React.FC = () => {
           </FadeIn>
 
           {/* Delivery estimate */}
-          <FadeIn startFrame={300} slideY={3}>
+          <FadeIn startFrame={300} slideY={6}>
             <div
               style={{
-                marginTop: 12,
-                padding: "8px 10px",
+                marginTop: 24,
+                padding: "16px 20px",
                 background: theme.bgVoid,
-                borderRadius: 6,
-                border: `1px solid ${theme.borderSubtle}`,
+                borderRadius: 12,
+                border: `2px solid ${theme.borderSubtle}`,
               }}
             >
-              <div style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: 1, color: theme.textTertiary, marginBottom: 4 }}>
+              <div style={{ fontSize: 18, textTransform: "uppercase", letterSpacing: 2, color: theme.textTertiary, marginBottom: 8 }}>
                 Production Estimate
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: theme.textSecondary }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 20, color: theme.textSecondary }}>
                 <span>Fabrication</span>
                 <span style={{ fontFamily: theme.fontMono, color: theme.amber }}>~4 weeks</span>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: theme.textSecondary, marginTop: 2 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 20, color: theme.textSecondary, marginTop: 4 }}>
                 <span>Erection</span>
                 <span style={{ fontFamily: theme.fontMono, color: theme.amber }}>~2 weeks</span>
               </div>
@@ -373,14 +373,14 @@ export const WarehouseScene: React.FC = () => {
       <div
         style={{
           flex: 1,
-          marginTop: 44,
+          marginTop: 88,
           background: `linear-gradient(180deg, #1a2030, ${theme.bgViewport})`,
           position: "relative",
         }}
       >
         <ThreeCanvas
-          width={1300}
-          height={1036}
+          width={2600}
+          height={2072}
           camera={{ fov: 40, position: [4, 2, 4] }}
           style={{ width: "100%", height: "100%" }}
         >
@@ -394,15 +394,15 @@ export const WarehouseScene: React.FC = () => {
           <div
             style={{
               position: "absolute",
-              top: 16,
-              left: 16,
-              fontSize: 11,
+              top: 32,
+              left: 32,
+              fontSize: 22,
               fontFamily: theme.fontMono,
               color: theme.green,
               background: "rgba(52, 211, 153, 0.1)",
-              border: "1px solid rgba(52, 211, 153, 0.3)",
-              padding: "4px 10px",
-              borderRadius: 6,
+              border: "2px solid rgba(52, 211, 153, 0.3)",
+              padding: "8px 20px",
+              borderRadius: 12,
             }}
           >
             ESTIMATION MODEL
@@ -413,40 +413,40 @@ export const WarehouseScene: React.FC = () => {
       {/* Right — Chat Panel */}
       <div
         style={{
-          width: 400,
-          marginTop: 44,
+          width: 800,
+          marginTop: 88,
           background: theme.bgSurface,
-          borderLeft: `1px solid ${theme.borderDefault}`,
+          borderLeft: `2px solid ${theme.borderDefault}`,
           display: "flex",
           flexDirection: "column",
         }}
       >
         <div
           style={{
-            padding: "12px 16px 8px",
-            fontSize: 10,
+            padding: "24px 32px 16px",
+            fontSize: 20,
             fontWeight: 600,
             textTransform: "uppercase",
-            letterSpacing: 1.5,
+            letterSpacing: 3,
             color: theme.textTertiary,
             display: "flex",
             alignItems: "center",
-            gap: 6,
+            gap: 12,
           }}
         >
           <span style={{ color: theme.violet }}>●</span> AI Assistant
         </div>
 
-        <div style={{ flex: 1, padding: "8px 16px" }}>
+        <div style={{ flex: 1, padding: "16px 32px" }}>
           {/* User message */}
-          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 24 }}>
             <div
               style={{
                 background: theme.violet,
                 color: "white",
-                padding: "10px 14px",
-                borderRadius: "16px 16px 4px 16px",
-                fontSize: 13,
+                padding: "20px 28px",
+                borderRadius: "32px 32px 8px 32px",
+                fontSize: 26,
                 maxWidth: "85%",
                 lineHeight: 1.5,
               }}
@@ -456,19 +456,19 @@ export const WarehouseScene: React.FC = () => {
           </div>
 
           {/* Response */}
-          <FadeIn startFrame={20} slideY={6}>
+          <FadeIn startFrame={20} slideY={12}>
             <div
               style={{
-                borderLeft: "2px solid rgba(155, 122, 255, 0.4)",
-                padding: "8px 12px",
+                borderLeft: "4px solid rgba(155, 122, 255, 0.4)",
+                padding: "16px 24px",
               }}
             >
-              <p style={{ fontSize: 13, color: theme.textSecondary, lineHeight: 1.6 }}>
+              <p style={{ fontSize: 26, color: theme.textSecondary, lineHeight: 1.6 }}>
                 Done. <strong style={{ color: theme.textPrimary }}>55×22m precast warehouse</strong> with
                 22 columns, 11 T-beam frames, 70 purlins, hollow-core roof panels,
                 wall panels, and pad foundations. Ready for cost estimation.
               </p>
-              <p style={{ fontSize: 13, color: theme.textSecondary, lineHeight: 1.6, marginTop: 8 }}>
+              <p style={{ fontSize: 26, color: theme.textSecondary, lineHeight: 1.6, marginTop: 16 }}>
                 Total: <strong style={{ color: theme.green }}>161 precast elements</strong> —
                 share this model with your client in minutes, not weeks.
               </p>
@@ -477,14 +477,14 @@ export const WarehouseScene: React.FC = () => {
         </div>
 
         {/* Chat input */}
-        <div style={{ padding: "12px 16px", borderTop: `1px solid ${theme.borderFaint}` }}>
+        <div style={{ padding: "24px 32px", borderTop: `2px solid ${theme.borderFaint}` }}>
           <div
             style={{
               background: theme.bgElevated,
-              border: `1px solid ${theme.borderDefault}`,
-              borderRadius: 12,
-              padding: "10px 14px",
-              fontSize: 13,
+              border: `2px solid ${theme.borderDefault}`,
+              borderRadius: 24,
+              padding: "20px 28px",
+              fontSize: 26,
               color: theme.textGhost,
               display: "flex",
               alignItems: "center",
@@ -492,7 +492,7 @@ export const WarehouseScene: React.FC = () => {
             }}
           >
             <span>Describe a 3D model...</span>
-            <span style={{ color: theme.violet, fontSize: 16 }}>↑</span>
+            <span style={{ color: theme.violet, fontSize: 32 }}>↑</span>
           </div>
         </div>
       </div>
