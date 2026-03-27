@@ -1,4 +1,4 @@
-import { useCurrentFrame, interpolate } from "remotion";
+import { useCurrentFrame, interpolate, staticFile, Img } from "remotion";
 import { FadeIn } from "../components/FadeIn";
 import { theme } from "../theme";
 
@@ -38,18 +38,14 @@ export const Outro: React.FC = () => {
         style={{
           opacity: logoOpacity,
           transform: `scale(${logoScale})`,
-          width: 90,
-          height: 90,
-          borderRadius: 20,
-          background: `linear-gradient(135deg, ${theme.accent}, ${theme.violet})`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          boxShadow: `0 0 ${glowSize}px ${glowSize / 2}px rgba(120, 130, 255, 0.25)`,
+          filter: `drop-shadow(0 0 ${glowSize}px rgba(120, 130, 255, 0.25))`,
           marginBottom: 32,
         }}
       >
-        <span style={{ fontSize: 50, fontWeight: 700, color: "white" }}>B</span>
+        <Img
+          src={staticFile("assets/logo.png")}
+          style={{ width: 100, height: 100 }}
+        />
       </div>
 
       <FadeIn startFrame={10} slideY={12}>

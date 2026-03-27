@@ -1,4 +1,4 @@
-import { useCurrentFrame, interpolate } from "remotion";
+import { useCurrentFrame, interpolate, staticFile, Img } from "remotion";
 import { FadeIn } from "../components/FadeIn";
 import { theme } from "../theme";
 
@@ -41,33 +41,19 @@ export const Intro: React.FC = () => {
         opacity: fadeOut,
       }}
     >
-      {/* Logo box */}
+      {/* Logo */}
       <div
         style={{
           opacity: logoOpacity,
           transform: `scale(${logoScale})`,
-          width: 110,
-          height: 110,
-          borderRadius: 22,
-          background: `linear-gradient(135deg, ${theme.accent}, ${theme.accentDim})`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          boxShadow: `0 0 ${glowSize}px ${glowSize / 2}px ${theme.accentGlowStrong}`,
+          filter: `drop-shadow(0 0 ${glowSize}px ${theme.accentGlowStrong})`,
           marginBottom: 36,
         }}
       >
-        <span
-          style={{
-            fontSize: 62,
-            fontWeight: 700,
-            color: "white",
-            fontFamily: theme.fontUi,
-            lineHeight: 1,
-          }}
-        >
-          B
-        </span>
+        <Img
+          src={staticFile("assets/logo.png")}
+          style={{ width: 120, height: 120 }}
+        />
       </div>
 
       {/* Title */}

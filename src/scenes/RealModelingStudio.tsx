@@ -1,5 +1,5 @@
 import React, { useRef, useMemo, useEffect } from "react";
-import { useCurrentFrame, interpolate, staticFile } from "remotion";
+import { useCurrentFrame, interpolate, staticFile, Img } from "remotion";
 import { ThreeCanvas } from "@remotion/three";
 import { useGLTF } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
@@ -188,20 +188,10 @@ export const RealModelingStudio: React.FC = () => {
           zIndex: 10,
         }}
       >
-        <div
-          style={{
-            width: 28,
-            height: 28,
-            borderRadius: 7,
-            background: `linear-gradient(135deg, ${theme.violet}, #7c5ce0)`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            marginRight: 10,
-          }}
-        >
-          <span style={{ color: "white", fontWeight: 700, fontSize: 16 }}>B</span>
-        </div>
+        <Img
+          src={staticFile("assets/logo.png")}
+          style={{ width: 28, height: 28, marginRight: 10 }}
+        />
         <span style={{ color: theme.textPrimary, fontWeight: 600, fontSize: 14, marginRight: 12 }}>
           Buildable
         </span>
