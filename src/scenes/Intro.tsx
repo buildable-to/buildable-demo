@@ -43,52 +43,37 @@ export const Intro: React.FC = () => {
           opacity: logoOpacity,
           transform: `scale(${logoScale})`,
           filter: `drop-shadow(0 0 ${glowSize}px ${theme.accentGlowStrong})`,
-          marginBottom: 40,
+          marginBottom: 48,
         }}
       >
-        <Img src={staticFile("assets/logo.png")} style={{ width: 120, height: 120 }} />
+        <Img src={staticFile("assets/logo.png")} style={{ width: 100, height: 100 }} />
       </div>
 
-      {/* "2 months" — synced with voice beat 1 */}
-      <FadeIn startFrame={15} slideY={15}>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 16, marginBottom: 8 }}>
-          <span
-            style={{
-              fontSize: 80,
-              fontWeight: 700,
-              color: theme.error,
-              fontFamily: theme.fontMono,
-              lineHeight: 1,
-            }}
-          >
-            2 months
-          </span>
-          <span style={{ fontSize: 28, color: theme.textTertiary }}>of drawings</span>
-        </div>
+      {/* "2 months of drawings" */}
+      <FadeIn startFrame={15} slideY={12}>
+        <p style={{ fontSize: 52, fontWeight: 300, color: theme.textPrimary, letterSpacing: "-0.5px", lineHeight: 1.3 }}>
+          <span style={{ fontWeight: 700, fontFamily: theme.fontMono, fontSize: 56 }}>2 months</span>
+          {" "}of drawings.
+        </p>
       </FadeIn>
 
-      {/* "15 days" — synced with voice beat 2 */}
-      <FadeIn startFrame={65} slideY={15}>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 16, marginBottom: 32 }}>
-          <span
-            style={{
-              fontSize: 80,
-              fontWeight: 700,
-              color: theme.green,
-              fontFamily: theme.fontMono,
-              lineHeight: 1,
-            }}
-          >
-            15 days
-          </span>
-          <span style={{ fontSize: 28, color: theme.textTertiary }}>of construction</span>
-        </div>
+      {/* "15 days of construction" */}
+      <FadeIn startFrame={65} slideY={12}>
+        <p style={{ fontSize: 52, fontWeight: 300, color: theme.textPrimary, letterSpacing: "-0.5px", lineHeight: 1.3, marginTop: 4 }}>
+          <span style={{ fontWeight: 700, fontFamily: theme.fontMono, fontSize: 56 }}>15 days</span>
+          {" "}of construction.
+        </p>
       </FadeIn>
 
-      {/* "That's the reality" — voice beat 3 */}
+      {/* Subtle divider line */}
+      <FadeIn startFrame={120}>
+        <div style={{ width: 60, height: 1, background: theme.borderDefault, margin: "28px 0" }} />
+      </FadeIn>
+
+      {/* "That's the reality" */}
       <FadeIn startFrame={130}>
-        <p style={{ fontSize: 22, color: theme.textSecondary, fontWeight: 400 }}>
-          That's the reality of precast concrete today.
+        <p style={{ fontSize: 20, color: theme.textTertiary, fontWeight: 400, letterSpacing: "0.3px" }}>
+          The reality of precast concrete today.
         </p>
       </FadeIn>
     </div>

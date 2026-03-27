@@ -5,7 +5,6 @@ import { theme } from "../theme";
 export const Outro: React.FC = () => {
   const frame = useCurrentFrame();
   // Total: 17s = 510 frames
-  // Voice: "$150B industry. 80% of project time on repetitive drawings. Buildable. One description. Construction-ready output. In minutes."
 
   const logoOpacity = interpolate(frame, [0, 20], [0, 1], {
     extrapolateLeft: "clamp",
@@ -15,7 +14,7 @@ export const Outro: React.FC = () => {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
-  const glowSize = interpolate(frame, [20, 200], [0, 60], {
+  const glowSize = interpolate(frame, [20, 200], [0, 50], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
@@ -33,29 +32,17 @@ export const Outro: React.FC = () => {
         fontFamily: theme.fontUi,
       }}
     >
-      {/* $150B stat — first voice beat */}
+      {/* $150B stat */}
       <FadeIn startFrame={5} slideY={10}>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 8 }}>
-          <span
-            style={{
-              fontSize: 72,
-              fontWeight: 700,
-              color: theme.accent,
-              fontFamily: theme.fontMono,
-              lineHeight: 1,
-            }}
-          >
-            $150B
-          </span>
-          <span style={{ fontSize: 22, color: theme.textTertiary }}>industry</span>
-        </div>
+        <p style={{ fontSize: 20, color: theme.textTertiary, marginBottom: 4, fontWeight: 400, letterSpacing: "0.5px" }}>
+          A <span style={{ fontFamily: theme.fontMono, fontWeight: 600, color: theme.textSecondary }}>$150B</span> industry.{" "}
+          <span style={{ fontFamily: theme.fontMono, fontWeight: 600, color: theme.textSecondary }}>80%</span> of time on repetitive drawings.
+        </p>
       </FadeIn>
 
-      {/* 80% stat */}
+      {/* Divider */}
       <FadeIn startFrame={60}>
-        <p style={{ fontSize: 20, color: theme.textSecondary, marginBottom: 48 }}>
-          80% of project time spent on repetitive drawings
-        </p>
+        <div style={{ width: 40, height: 1, background: theme.borderDefault, margin: "28px 0" }} />
       </FadeIn>
 
       {/* Logo */}
@@ -63,63 +50,56 @@ export const Outro: React.FC = () => {
         style={{
           opacity: logoOpacity,
           transform: `scale(${logoScale})`,
-          filter: `drop-shadow(0 0 ${glowSize}px rgba(120, 130, 255, 0.25))`,
-          marginBottom: 24,
+          filter: `drop-shadow(0 0 ${glowSize}px ${theme.accentGlowStrong})`,
+          marginBottom: 20,
         }}
       >
-        <Img src={staticFile("assets/logo.png")} style={{ width: 90, height: 90 }} />
+        <Img src={staticFile("assets/logo.png")} style={{ width: 80, height: 80 }} />
       </div>
 
       {/* Buildable title */}
-      <FadeIn startFrame={150} slideY={12}>
+      <FadeIn startFrame={140} slideY={10}>
         <h1
           style={{
-            fontSize: 56,
+            fontSize: 60,
             fontWeight: 700,
             color: theme.textPrimary,
-            letterSpacing: "-1px",
-            marginBottom: 16,
+            letterSpacing: "-1.5px",
+            marginBottom: 12,
           }}
         >
           Buildable
         </h1>
       </FadeIn>
 
-      {/* Tagline — matches voice */}
+      {/* Tagline */}
       <FadeIn startFrame={170}>
-        <p style={{ fontSize: 24, color: theme.textSecondary, textAlign: "center", lineHeight: 1.6 }}>
+        <p style={{ fontSize: 22, color: theme.textTertiary, fontWeight: 300 }}>
           Accelerate precast engineering.
         </p>
       </FadeIn>
 
       <FadeIn startFrame={220}>
-        <p style={{ fontSize: 28, color: theme.textPrimary, textAlign: "center", fontWeight: 600, marginTop: 8 }}>
-          Stop redrawing. <span style={{ color: theme.accent }}>Start building.</span>
+        <p style={{ fontSize: 26, color: theme.textPrimary, fontWeight: 500, marginTop: 8 }}>
+          Stop redrawing. Start building.
         </p>
       </FadeIn>
 
-      {/* Feature pills */}
-      <FadeIn startFrame={280} slideY={10}>
-        <div style={{ display: "flex", gap: 12, marginTop: 36 }}>
-          {[
-            { label: "2D Drawings", color: theme.accent },
-            { label: "3D Models", color: theme.violet },
-            { label: "Cost Estimation", color: theme.green },
-          ].map((pill) => (
-            <div
-              key={pill.label}
+      {/* Feature list — subtle, no colored pills */}
+      <FadeIn startFrame={280} slideY={8}>
+        <div style={{ display: "flex", gap: 24, marginTop: 36 }}>
+          {["2D Drawings", "3D Models", "Cost Estimation"].map((label) => (
+            <span
+              key={label}
               style={{
-                padding: "8px 22px",
-                borderRadius: 20,
-                border: `1px solid ${pill.color}40`,
-                background: `${pill.color}15`,
-                fontSize: 15,
-                fontWeight: 500,
-                color: pill.color,
+                fontSize: 13,
+                fontWeight: 400,
+                color: theme.textTertiary,
+                letterSpacing: "0.5px",
               }}
             >
-              {pill.label}
-            </div>
+              {label}
+            </span>
           ))}
         </div>
       </FadeIn>
@@ -127,10 +107,11 @@ export const Outro: React.FC = () => {
       <FadeIn startFrame={340}>
         <p
           style={{
-            marginTop: 44,
-            fontSize: 16,
-            color: theme.textTertiary,
+            marginTop: 48,
+            fontSize: 15,
+            color: theme.textGhost,
             fontFamily: theme.fontMono,
+            fontWeight: 400,
           }}
         >
           buildable.to

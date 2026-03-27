@@ -5,7 +5,6 @@ import { theme } from "../theme";
 export const Problem: React.FC = () => {
   const frame = useCurrentFrame();
   // Total: 31s = 930 frames
-  // Voice: "Engineers spend 80% of their time drafting. The same templates..."
 
   // Animated percentage
   const pct = Math.min(
@@ -24,18 +23,13 @@ export const Problem: React.FC = () => {
     extrapolateRight: "clamp",
   });
 
-  // Pain point items appear sequentially synced to voice
-  // "same templates" ~3s(90f), "same beam sections" ~4.5s(135f), "same rebar" ~6s(180f)
+  // Pain point items
   const painPoints = [
     { text: "Same templates", start: 100 },
     { text: "Same beam sections", start: 150 },
     { text: "Same rebar schedules", start: 200 },
     { text: "Different numbers every time", start: 260 },
   ];
-
-  // Cost stats — synced with "one drawing error costs $10K" ~12s(360f)
-  // "one parameter change takes hours" ~16s(480f)
-  // "75% still in AutoCAD" ~22s(660f)
 
   const fadeOut = interpolate(frame, [905, 930], [1, 0], {
     extrapolateLeft: "clamp",
@@ -57,16 +51,17 @@ export const Problem: React.FC = () => {
         opacity: fadeOut,
       }}
     >
-      {/* "80%" big number */}
+      {/* "80%" big number — white on dark, no color needed */}
       <FadeIn startFrame={10}>
-        <div style={{ textAlign: "center", marginBottom: 24 }}>
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
           <span
             style={{
-              fontSize: 160,
+              fontSize: 150,
               fontWeight: 700,
-              color: theme.error,
+              color: theme.textPrimary,
               lineHeight: 1,
               fontFamily: theme.fontMono,
+              letterSpacing: "-4px",
             }}
           >
             {pct}%
@@ -74,13 +69,13 @@ export const Problem: React.FC = () => {
         </div>
       </FadeIn>
 
-      {/* Progress bar */}
+      {/* Progress bar — single muted color */}
       <FadeIn startFrame={15}>
         <div
           style={{
-            width: 640,
-            height: 14,
-            borderRadius: 7,
+            width: 560,
+            height: 4,
+            borderRadius: 2,
             background: theme.bgElevated,
             marginBottom: 20,
             overflow: "hidden",
@@ -90,27 +85,27 @@ export const Problem: React.FC = () => {
             style={{
               width: `${barWidth}%`,
               height: "100%",
-              borderRadius: 7,
-              background: `linear-gradient(90deg, ${theme.error}, ${theme.amber})`,
+              borderRadius: 2,
+              background: theme.textTertiary,
             }}
           />
         </div>
       </FadeIn>
 
       <FadeIn startFrame={25}>
-        <p style={{ fontSize: 28, color: theme.textSecondary, marginBottom: 36 }}>
-          of an engineer's time goes to <strong style={{ color: theme.textPrimary }}>drafting</strong>
+        <p style={{ fontSize: 26, color: theme.textSecondary, marginBottom: 40, fontWeight: 300 }}>
+          of an engineer's time goes to <span style={{ fontWeight: 600, color: theme.textPrimary }}>drafting</span>
         </p>
       </FadeIn>
 
-      {/* Pain point pills */}
-      <div style={{ display: "flex", gap: 14, marginBottom: 48, flexWrap: "wrap", justifyContent: "center" }}>
+      {/* Pain point pills — subtle, no color coding */}
+      <div style={{ display: "flex", gap: 10, marginBottom: 56, flexWrap: "wrap", justifyContent: "center" }}>
         {painPoints.map((item) => {
           const op = interpolate(frame, [item.start, item.start + 15], [0, 1], {
             extrapolateLeft: "clamp",
             extrapolateRight: "clamp",
           });
-          const y = interpolate(frame, [item.start, item.start + 15], [12, 0], {
+          const y = interpolate(frame, [item.start, item.start + 15], [10, 0], {
             extrapolateLeft: "clamp",
             extrapolateRight: "clamp",
           });
@@ -120,12 +115,12 @@ export const Problem: React.FC = () => {
               style={{
                 opacity: op,
                 transform: `translateY(${y}px)`,
-                padding: "10px 24px",
-                borderRadius: 10,
-                border: `1px solid ${theme.borderDefault}`,
-                background: theme.bgElevated,
-                fontSize: 16,
-                fontWeight: 500,
+                padding: "8px 20px",
+                borderRadius: 8,
+                border: `1px solid ${theme.borderSubtle}`,
+                background: theme.bgSurface,
+                fontSize: 14,
+                fontWeight: 400,
                 color: theme.textSecondary,
               }}
             >
@@ -135,40 +130,61 @@ export const Problem: React.FC = () => {
         })}
       </div>
 
-      {/* Cost stats row — appears later */}
-      <div style={{ display: "flex", gap: 40, marginTop: 10 }}>
-        {/* $10K error cost */}
-        <FadeIn startFrame={360} slideY={10}>
+      {/* Stats row — monochromatic, emphasis through size/weight only */}
+      <div style={{ display: "flex", gap: 60 }}>
+        <FadeIn startFrame={360} slideY={8}>
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 48, fontWeight: 700, color: theme.error, fontFamily: theme.fontMono }}>
+            <div
+              style={{
+                fontSize: 44,
+                fontWeight: 700,
+                color: theme.textPrimary,
+                fontFamily: theme.fontMono,
+                letterSpacing: "-1px",
+              }}
+            >
               $10K+
             </div>
-            <div style={{ fontSize: 14, color: theme.textTertiary, marginTop: 6 }}>
-              cost per drawing error
+            <div style={{ fontSize: 13, color: theme.textTertiary, marginTop: 6, fontWeight: 400 }}>
+              per drawing error
             </div>
           </div>
         </FadeIn>
 
-        {/* Hours per change */}
-        <FadeIn startFrame={480} slideY={10}>
+        <FadeIn startFrame={480} slideY={8}>
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 48, fontWeight: 700, color: theme.amber, fontFamily: theme.fontMono }}>
+            <div
+              style={{
+                fontSize: 44,
+                fontWeight: 700,
+                color: theme.textPrimary,
+                fontFamily: theme.fontMono,
+                letterSpacing: "-1px",
+              }}
+            >
               3+ days
             </div>
-            <div style={{ fontSize: 14, color: theme.textTertiary, marginTop: 6 }}>
+            <div style={{ fontSize: 13, color: theme.textTertiary, marginTop: 6, fontWeight: 400 }}>
               per revision cycle
             </div>
           </div>
         </FadeIn>
 
-        {/* 75% AutoCAD */}
-        <FadeIn startFrame={660} slideY={10}>
+        <FadeIn startFrame={660} slideY={8}>
           <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 48, fontWeight: 700, color: theme.textPrimary, fontFamily: theme.fontMono }}>
+            <div
+              style={{
+                fontSize: 44,
+                fontWeight: 700,
+                color: theme.textPrimary,
+                fontFamily: theme.fontMono,
+                letterSpacing: "-1px",
+              }}
+            >
               75%
             </div>
-            <div style={{ fontSize: 14, color: theme.textTertiary, marginTop: 6 }}>
-              still using manual AutoCAD
+            <div style={{ fontSize: 13, color: theme.textTertiary, marginTop: 6, fontWeight: 400 }}>
+              still manual AutoCAD
             </div>
           </div>
         </FadeIn>
