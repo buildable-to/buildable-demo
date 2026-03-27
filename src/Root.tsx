@@ -2,32 +2,32 @@ import "./index.css";
 import { Audio, Composition, Sequence, staticFile } from "remotion";
 import { Intro } from "./scenes/Intro";
 import { Problem } from "./scenes/Problem";
-import { DesignStudio } from "./scenes/DesignStudio";
-import { ModelingStudio } from "./scenes/ModelingStudio";
+import { RealDesignStudio } from "./scenes/RealDesignStudio";
+import { RealModelingStudio } from "./scenes/RealModelingStudio";
 import { Outro } from "./scenes/Outro";
 
 const FPS = 30;
 
-// Scene durations matched to voice audio (rounded up to next second)
+// Scene durations matched to voice audio (rounded up to next second + 1s buffer)
 const INTRO_S = 7;
-const PROBLEM_S = 16;
-const DESIGN_S = 18;
-const MODELING_S = 16;
+const PROBLEM_S = 17;
+const DESIGN_S = 29;
+const MODELING_S = 26;
 const OUTRO_S = 8;
 
 const TOTAL_S = INTRO_S + PROBLEM_S + DESIGN_S + MODELING_S + OUTRO_S;
 
 const voiceFiles = [
-  { file: "voice/intro.mp3", scene: "intro" },
-  { file: "voice/problem.mp3", scene: "problem" },
-  { file: "voice/design-studio.mp3", scene: "design-studio" },
-  { file: "voice/modeling-studio.mp3", scene: "modeling-studio" },
-  { file: "voice/outro.mp3", scene: "outro" },
+  "voice/intro.mp3",
+  "voice/problem.mp3",
+  "voice/design-studio.mp3",
+  "voice/modeling-studio.mp3",
+  "voice/outro.mp3",
 ];
 
 const BuildableDemo: React.FC = () => {
   const sceneDurations = [INTRO_S, PROBLEM_S, DESIGN_S, MODELING_S, OUTRO_S];
-  const scenes = [Intro, Problem, DesignStudio, ModelingStudio, Outro];
+  const scenes = [Intro, Problem, RealDesignStudio, RealModelingStudio, Outro];
 
   let offset = 0;
   const sceneEntries = scenes.map((Component, i) => {
@@ -41,7 +41,7 @@ const BuildableDemo: React.FC = () => {
       {sceneEntries.map(({ Component, from, duration }, i) => (
         <Sequence key={i} from={from} durationInFrames={duration * FPS}>
           <Component />
-          <Audio src={staticFile(voiceFiles[i].file)} volume={1} />
+          <Audio src={staticFile(voiceFiles[i])} volume={1} />
         </Sequence>
       ))}
     </div>
@@ -79,16 +79,16 @@ export const RemotionRoot: React.FC = () => {
         height={1080}
       />
       <Composition
-        id="DesignStudio"
-        component={DesignStudio}
+        id="RealDesignStudio"
+        component={RealDesignStudio}
         durationInFrames={DESIGN_S * FPS}
         fps={FPS}
         width={1920}
         height={1080}
       />
       <Composition
-        id="ModelingStudio"
-        component={ModelingStudio}
+        id="RealModelingStudio"
+        component={RealModelingStudio}
         durationInFrames={MODELING_S * FPS}
         fps={FPS}
         width={1920}

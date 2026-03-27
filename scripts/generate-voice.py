@@ -2,7 +2,6 @@
 import asyncio
 import edge_tts
 import os
-import json
 
 # Professional male voice — good for product demos
 VOICE = "en-US-GuyNeural"
@@ -16,15 +15,15 @@ SCENES = [
     },
     {
         "name": "problem",
-        "text": "After winning a contract, engineers spend twenty out of twenty-five project days just producing shop drawings. Connection details, fabrication plans, section views. It's the biggest bottleneck in precast construction.",
+        "text": "After winning a contract, engineers spend twenty out of twenty-five project days just producing shop drawings. Connection details, fabrication plans, section views, rebar schedules. It's the biggest bottleneck in precast construction.",
     },
     {
         "name": "design-studio",
-        "text": "With Buildable, you simply describe what you need. A column cross-section, a beam detail, a wall panel. The AI writes the drawing script, runs it, and renders the result in seconds. Every layer follows standard CAD conventions.",
+        "text": "With Buildable, you simply describe what you need. A beam detail, a column section, a foundation plan. The AI writes the drawing script, executes it, and renders the result in seconds. This is a real rectangular beam detail, complete with elevation view, cross-sections, rebar layout, stirrup spacing, and dimensions. Every layer follows standard CAD conventions, ready for production.",
     },
     {
         "name": "modeling-studio",
-        "text": "Need a three-D model for estimation? Describe the structure, and Buildable generates it using FreeCAD. Toggle x-ray mode to inspect rebar placement. From concept to model, in minutes.",
+        "text": "Need a three-D model for estimation? Describe the structure, and Buildable generates it using FreeCAD. Here's a real precast beam with forty-two stirrups and five longitudinal rebars. Watch as we toggle between normal view, x-ray mode to see through the concrete, and rebar-only view for reinforcement inspection. From concept to model, in minutes.",
     },
     {
         "name": "outro",
@@ -44,7 +43,6 @@ async def generate():
         await communicate.save(output_path)
         print(f"  -> {output_path}")
 
-    # Also generate a manifest for Remotion to know durations
     print("\nAll voice files generated in", OUTPUT_DIR)
     print("Files:", os.listdir(OUTPUT_DIR))
 

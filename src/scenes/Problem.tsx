@@ -4,7 +4,7 @@ import { theme } from "../theme";
 
 export const Problem: React.FC = () => {
   const frame = useCurrentFrame();
-  // Total: 16s = 480 frames
+  // Total: 17s = 510 frames
 
   // Counter animation: count up from 0 to 20 (frames 20-80)
   const count = Math.min(
@@ -33,7 +33,7 @@ export const Problem: React.FC = () => {
   ];
 
   // Fade out at end
-  const fadeOut = interpolate(frame, [440, 480], [1, 0], {
+  const fadeOut = interpolate(frame, [470, 510], [1, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
