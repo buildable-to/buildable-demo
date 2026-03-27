@@ -4,7 +4,7 @@ import { theme } from "../theme";
 
 export const Problem: React.FC = () => {
   const frame = useCurrentFrame();
-  // Total: 27s = 810 frames
+  // Total: 25s = 750 frames
 
   // Animated percentage
   const pct = Math.min(
@@ -31,7 +31,7 @@ export const Problem: React.FC = () => {
     { text: "Different numbers every time", start: 215 },
   ];
 
-  const fadeOut = interpolate(frame, [788, 810], [1, 0], {
+  const fadeOut = interpolate(frame, [728, 750], [1, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });

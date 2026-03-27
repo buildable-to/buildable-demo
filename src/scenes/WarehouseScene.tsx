@@ -119,13 +119,13 @@ const WarehouseModel: React.FC = () => {
 
 export const WarehouseScene: React.FC = () => {
   const frame = useCurrentFrame();
-  // Total: 22s = 660 frames
+  // Total: 25s = 750 frames
 
   const uiOpacity = interpolate(frame, [0, 20], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
-  const fadeOut = interpolate(frame, [638, 660], [1, 0], {
+  const fadeOut = interpolate(frame, [728, 750], [1, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
@@ -385,7 +385,7 @@ export const WarehouseScene: React.FC = () => {
           style={{ width: "100%", height: "100%" }}
         >
           <color attach="background" args={["#1a2030"]} />
-          <CameraRig frame={frame} totalFrames={660} />
+          <CameraRig frame={frame} totalFrames={750} />
           <WarehouseModel />
         </ThreeCanvas>
 

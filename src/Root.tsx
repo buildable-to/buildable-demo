@@ -9,13 +9,13 @@ import { Outro } from "./scenes/Outro";
 
 const FPS = 30;
 
-// Tight durations — voice + 0.5s
-const INTRO_S = 8;
-const PROBLEM_S = 27;
-const DESIGN_S = 36;
-const MODELING_S = 16;
-const WAREHOUSE_S = 22;
-const OUTRO_S = 15;
+// Tight durations — ElevenLabs voice + 0.5s
+const INTRO_S = 7;
+const PROBLEM_S = 25;
+const DESIGN_S = 37;
+const MODELING_S = 17;
+const WAREHOUSE_S = 25;
+const OUTRO_S = 14;
 
 const TOTAL_S = INTRO_S + PROBLEM_S + DESIGN_S + MODELING_S + WAREHOUSE_S + OUTRO_S;
 

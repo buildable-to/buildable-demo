@@ -1,10 +1,10 @@
-"""Generate voiceover audio for each scene using Edge TTS."""
-import asyncio
-import edge_tts
+"""Generate voiceover audio for each scene using ElevenLabs."""
 import os
+from elevenlabs import ElevenLabs
 
-# Professional male voice — good for product demos
-VOICE = "en-US-GuyNeural"
+API_KEY = "sk_80037ef5e6189c52f61a8a2d7c0d51d4dfb44ffda6e33d8f"
+VOICE_ID = "TX3LPaxmHKxFdv7VOQHJ"  # Liam — Energetic, Confident
+MODEL = "eleven_multilingual_v2"
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "..", "public", "voice")
 
 SCENES = [
@@ -72,19 +72,29 @@ SCENES = [
 ]
 
 
-async def generate():
+def generate():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
+    client = ElevenLabs(api_key=API_KEY)
 
     for scene in SCENES:
         output_path = os.path.join(OUTPUT_DIR, f"{scene['name']}.mp3")
         print(f"Generating: {scene['name']}...")
 
-        communicate = edge_tts.Communicate(scene["text"], VOICE, rate="+8%")
-        await communicate.save(output_path)
+        audio = client.text_to_speech.convert(
+            voice_id=VOICE_ID,
+            text=scene["text"],
+            model_id=MODEL,
+            output_format="mp3_44100_128",
+        )
+
+        with open(output_path, "wb") as f:
+            for chunk in audio:
+                f.write(chunk)
+
         print(f"  -> {output_path}")
 
-    print("\nAll voice files generated in", OUTPUT_DIR)
+    print("\nDone!")
 
 
 if __name__ == "__main__":
-    asyncio.run(generate())
+    generate()

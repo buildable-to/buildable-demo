@@ -6,7 +6,7 @@ import { theme } from "../theme";
 
 export const RealDesignStudio: React.FC = () => {
   const frame = useCurrentFrame();
-  // Total: 36s = 1080 frames
+  // Total: 37s = 1110 frames
 
   const [svgContent, setSvgContent] = useState<string>("");
   const [handle] = useState(() => delayRender("Loading SVG"));
@@ -85,7 +85,7 @@ export const RealDesignStudio: React.FC = () => {
     );
 
   // Fade out at end
-  const fadeOut = interpolate(frame, [1055, 1080], [1, 0], {
+  const fadeOut = interpolate(frame, [1088, 1110], [1, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });

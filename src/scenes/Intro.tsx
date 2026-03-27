@@ -4,7 +4,7 @@ import { theme } from "../theme";
 
 export const Intro: React.FC = () => {
   const frame = useCurrentFrame();
-  // Total: 8s = 240 frames
+  // Total: 7s = 210 frames
 
   const logoOpacity = interpolate(frame, [0, 20], [0, 1], {
     extrapolateLeft: "clamp",
@@ -18,7 +18,7 @@ export const Intro: React.FC = () => {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
-  const fadeOut = interpolate(frame, [218, 240], [1, 0], {
+  const fadeOut = interpolate(frame, [188, 210], [1, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });

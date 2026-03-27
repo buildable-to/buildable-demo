@@ -4,7 +4,7 @@ import { theme } from "../theme";
 
 export const Outro: React.FC = () => {
   const frame = useCurrentFrame();
-  // Total: 15s = 450 frames
+  // Total: 14s = 420 frames
 
   const logoOpacity = interpolate(frame, [0, 20], [0, 1], {
     extrapolateLeft: "clamp",
