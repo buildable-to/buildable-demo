@@ -85,26 +85,7 @@ export const Outro: React.FC = () => {
         </p>
       </FadeIn>
 
-      {/* Feature list — subtle, no colored pills */}
-      <FadeIn startFrame={280} slideY={8}>
-        <div style={{ display: "flex", gap: 24, marginTop: 36 }}>
-          {["2D Drawings", "3D Models", "Cost Estimation"].map((label) => (
-            <span
-              key={label}
-              style={{
-                fontSize: 13,
-                fontWeight: 400,
-                color: theme.textTertiary,
-                letterSpacing: "0.5px",
-              }}
-            >
-              {label}
-            </span>
-          ))}
-        </div>
-      </FadeIn>
-
-      <FadeIn startFrame={340}>
+      <FadeIn startFrame={300}>
         <p
           style={{
             marginTop: 48,
