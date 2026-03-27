@@ -39,25 +39,39 @@ export const RealDesignStudio: React.FC = () => {
   const typingDone = typingStart + userMessage.length / 0.8;
   const thinkingStart = typingDone + 15;
 
-  // SVG reveal: clip from left to right
+  // SVG staged reveal — show views one by one
+  // View 1: Elevation (0-70%) — reveal + hold
+  // View 2: Cross-section A (72-82%) — reveal + hold
+  // View 3: Cross-section B + details (85-100%) — reveal to full
+  const t = thinkingStart;
   const svgReveal = interpolate(
     frame,
-    [thinkingStart + 30, thinkingStart + 150],
-    [0, 100],
+    [
+      t + 30,  t + 120,   // View 1: elevation sweeps in
+      t + 200, t + 260,   // View 2: first cross-section appears
+      t + 360, t + 420,   // View 3: second cross-section + details
+    ],
+    [0, 72, 72, 84, 84, 100],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
 
-  // Pan & zoom animation on the SVG
+  // Pan & zoom — focus on each view as it appears, then pull back to full
   const svgScale = interpolate(
     frame,
-    [thinkingStart + 30, thinkingStart + 100, thinkingStart + 400, thinkingStart + 700, 1200],
-    [1.2, 1.0, 1.15, 1.05, 1.0],
+    [t + 30, t + 80, t + 200, t + 240, t + 360, t + 400, t + 500, 1200],
+    [1.8,    1.3,    1.3,     1.5,     1.5,     1.3,     1.05,   1.0],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
   const svgPanX = interpolate(
     frame,
-    [thinkingStart + 30, thinkingStart + 150, thinkingStart + 450, thinkingStart + 700, 1200],
-    [100, 0, -60, 30, 0],
+    [t + 30, t + 80, t + 200, t + 240, t + 360, t + 400, t + 500, 1200],
+    [200,    40,     40,      -120,    -120,    -180,    0,       0],
+    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+  );
+  const svgPanY = interpolate(
+    frame,
+    [t + 30, t + 80, t + 200, t + 240, t + 360, t + 400, t + 500, 1200],
+    [0,      0,      0,       -10,     -10,     -10,     0,       0],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
 
@@ -233,7 +247,7 @@ export const RealDesignStudio: React.FC = () => {
               width: "95%",
               height: "85%",
               clipPath: `inset(0 ${100 - svgReveal}% 0 0)`,
-              transform: `scale(${svgScale}) translateX(${svgPanX}px)`,
+              transform: `scale(${svgScale}) translate(${svgPanX}px, ${svgPanY}px)`,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
