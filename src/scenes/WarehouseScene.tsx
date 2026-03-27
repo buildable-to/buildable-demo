@@ -205,7 +205,7 @@ export const WarehouseScene: React.FC = () => {
           Precast Warehouse
         </div>
 
-        {/* Element breakdown */}
+        {/* Element breakdown with costs */}
         <div style={{ padding: "16px 14px 0" }}>
           <div
             style={{
@@ -217,38 +217,155 @@ export const WarehouseScene: React.FC = () => {
               marginBottom: 10,
             }}
           >
-            Elements
+            Cost Estimate
           </div>
           {[
-            { name: "Columns", count: "22", color: "#c8c8c8" },
-            { name: "T-Beams", count: "11", color: "#c8c8c8" },
-            { name: "Purlins", count: "70", color: "#c8c8c8" },
-            { name: "Corbels", count: "22", color: "#c8c8c8" },
-            { name: "Roof Panels", count: "10", color: "#b8c0c8" },
-            { name: "Wall Panels", count: "4", color: "#d0d0d0" },
-            { name: "Foundations", count: "22", color: "#999999" },
-          ].map((el, i) => (
-            <FadeIn key={el.name} startFrame={40 + i * 15} slideY={4}>
+            { name: "Columns", count: 22, unit: 1850, color: "#c8c8c8" },
+            { name: "T-Beams", count: 11, unit: 4200, color: "#c8c8c8" },
+            { name: "Purlins", count: 70, unit: 380, color: "#c8c8c8" },
+            { name: "Corbels", count: 22, unit: 420, color: "#c8c8c8" },
+            { name: "Roof Panels", count: 10, unit: 2800, color: "#b8c0c8" },
+            { name: "Wall Panels", count: 4, unit: 6500, color: "#d0d0d0" },
+            { name: "Foundations", count: 22, unit: 1200, color: "#999999" },
+          ].map((el, i) => {
+            const lineStart = 40 + i * 20;
+            const lineOp = interpolate(frame, [lineStart, lineStart + 12], [0, 1], {
+              extrapolateLeft: "clamp",
+              extrapolateRight: "clamp",
+            });
+            const lineTotal = el.count * el.unit;
+            return (
               <div
+                key={el.name}
                 style={{
+                  opacity: lineOp,
+                  transform: `translateY(${(1 - lineOp) * 4}px)`,
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  padding: "4px 0",
-                  fontSize: 11,
+                  padding: "3px 0",
+                  fontSize: 10,
                   color: theme.textSecondary,
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <div style={{ width: 6, height: 6, borderRadius: 1, background: el.color }} />
-                  {el.name}
+                <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                  <div style={{ width: 5, height: 5, borderRadius: 1, background: el.color }} />
+                  <span>{el.name}</span>
+                  <span style={{ color: theme.textGhost, fontFamily: theme.fontMono, fontSize: 9 }}>
+                    ×{el.count}
+                  </span>
                 </div>
                 <span style={{ fontFamily: theme.fontMono, fontSize: 10, color: theme.textTertiary }}>
-                  {el.count}
+                  ${lineTotal.toLocaleString()}
                 </span>
               </div>
-            </FadeIn>
-          ))}
+            );
+          })}
+
+          {/* Divider */}
+          <div
+            style={{
+              height: 1,
+              background: theme.borderDefault,
+              margin: "8px 0",
+              opacity: interpolate(frame, [185, 200], [0, 1], {
+                extrapolateLeft: "clamp",
+                extrapolateRight: "clamp",
+              }),
+            }}
+          />
+
+          {/* Total — animated counter */}
+          {(() => {
+            const totalStart = 200;
+            const totalOp = interpolate(frame, [totalStart, totalStart + 20], [0, 1], {
+              extrapolateLeft: "clamp",
+              extrapolateRight: "clamp",
+            });
+            const totalTarget = 165_760; // sum of all line items
+            const countUp = Math.floor(
+              interpolate(frame, [totalStart, totalStart + 40], [0, totalTarget], {
+                extrapolateLeft: "clamp",
+                extrapolateRight: "clamp",
+              })
+            );
+            return (
+              <div
+                style={{
+                  opacity: totalOp,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  padding: "2px 0",
+                }}
+              >
+                <span style={{ fontSize: 11, fontWeight: 600, color: theme.textPrimary }}>
+                  Estimated Total
+                </span>
+                <span
+                  style={{
+                    fontFamily: theme.fontMono,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: theme.green,
+                  }}
+                >
+                  ${countUp.toLocaleString()}
+                </span>
+              </div>
+            );
+          })()}
+
+          {/* Per-sqm cost */}
+          <FadeIn startFrame={260} slideY={3}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "2px 0",
+                marginTop: 2,
+              }}
+            >
+              <span style={{ fontSize: 10, color: theme.textTertiary }}>
+                Per m² (1,210 m²)
+              </span>
+              <span
+                style={{
+                  fontFamily: theme.fontMono,
+                  fontSize: 10,
+                  color: theme.textTertiary,
+                }}
+              >
+                $137/m²
+              </span>
+            </div>
+          </FadeIn>
+
+          {/* Delivery estimate */}
+          <FadeIn startFrame={300} slideY={3}>
+            <div
+              style={{
+                marginTop: 12,
+                padding: "8px 10px",
+                background: theme.bgVoid,
+                borderRadius: 6,
+                border: `1px solid ${theme.borderSubtle}`,
+              }}
+            >
+              <div style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: 1, color: theme.textTertiary, marginBottom: 4 }}>
+                Production Estimate
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: theme.textSecondary }}>
+                <span>Fabrication</span>
+                <span style={{ fontFamily: theme.fontMono, color: theme.amber }}>~4 weeks</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: theme.textSecondary, marginTop: 2 }}>
+                <span>Erection</span>
+                <span style={{ fontFamily: theme.fontMono, color: theme.amber }}>~2 weeks</span>
+              </div>
+            </div>
+          </FadeIn>
         </div>
       </div>
 
