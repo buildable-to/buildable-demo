@@ -79,7 +79,7 @@ async def generate():
         output_path = os.path.join(OUTPUT_DIR, f"{scene['name']}.mp3")
         print(f"Generating: {scene['name']}...")
 
-        communicate = edge_tts.Communicate(scene["text"], VOICE, rate="-5%")
+        communicate = edge_tts.Communicate(scene["text"], VOICE, rate="+8%")
         await communicate.save(output_path)
         print(f"  -> {output_path}")
 

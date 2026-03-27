@@ -138,7 +138,7 @@ const BeamModel: React.FC<{
 
 export const RealModelingStudio: React.FC = () => {
   const frame = useCurrentFrame();
-  // Total: 18s = 540 frames
+  // Total: 16s = 480 frames
 
   const uiOpacity = interpolate(frame, [0, 20], [0, 1], {
     extrapolateLeft: "clamp",
@@ -147,16 +147,16 @@ export const RealModelingStudio: React.FC = () => {
 
   // View mode transitions synced to voice:
   // "inspect from any angle" ~3s, "x-ray mode" ~7s(210f), "rebar-only" ~12s(360f)
-  // 0-200: normal, 200-340: xray, 340-540: rebar only
+  // 0-170: normal, 170-300: xray, 300-480: rebar only
   const viewMode: "normal" | "xray" | "rebar" =
-    frame < 200 ? "normal" : frame < 340 ? "xray" : "rebar";
+    frame < 170 ? "normal" : frame < 300 ? "xray" : "rebar";
 
   // View mode label
   const viewLabel =
     viewMode === "normal" ? "NORMAL" : viewMode === "xray" ? "X-RAY" : "REBAR ONLY";
 
   // Fade out at end
-  const fadeOut = interpolate(frame, [515, 540], [1, 0], {
+  const fadeOut = interpolate(frame, [458, 480], [1, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
@@ -315,7 +315,7 @@ export const RealModelingStudio: React.FC = () => {
           style={{ width: "100%", height: "100%" }}
         >
           <color attach="background" args={[theme.bgViewport]} />
-          <CameraRig frame={frame} totalFrames={540} />
+          <CameraRig frame={frame} totalFrames={480} />
           <BeamModel viewMode={viewMode} />
           <gridHelper args={[10, 20, "#333", "#222"]} position={[0, -1, 0]} />
         </ThreeCanvas>

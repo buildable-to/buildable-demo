@@ -4,7 +4,7 @@ import { theme } from "../theme";
 
 export const Intro: React.FC = () => {
   const frame = useCurrentFrame();
-  // Total: 9s = 270 frames
+  // Total: 8s = 240 frames
 
   const logoOpacity = interpolate(frame, [0, 20], [0, 1], {
     extrapolateLeft: "clamp",
@@ -18,7 +18,7 @@ export const Intro: React.FC = () => {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
-  const fadeOut = interpolate(frame, [245, 270], [1, 0], {
+  const fadeOut = interpolate(frame, [218, 240], [1, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
@@ -58,7 +58,7 @@ export const Intro: React.FC = () => {
       </FadeIn>
 
       {/* "15 days of construction" */}
-      <FadeIn startFrame={65} slideY={12}>
+      <FadeIn startFrame={55} slideY={12}>
         <p style={{ fontSize: 52, fontWeight: 300, color: theme.textPrimary, letterSpacing: "-0.5px", lineHeight: 1.3, marginTop: 4 }}>
           <span style={{ fontWeight: 700, fontFamily: theme.fontMono, fontSize: 56 }}>15 days</span>
           {" "}of construction.
@@ -66,12 +66,12 @@ export const Intro: React.FC = () => {
       </FadeIn>
 
       {/* Subtle divider line */}
-      <FadeIn startFrame={120}>
+      <FadeIn startFrame={105}>
         <div style={{ width: 60, height: 1, background: theme.borderDefault, margin: "28px 0" }} />
       </FadeIn>
 
       {/* "That's the reality" */}
-      <FadeIn startFrame={130}>
+      <FadeIn startFrame={115}>
         <p style={{ fontSize: 20, color: theme.textTertiary, fontWeight: 400, letterSpacing: "0.3px" }}>
           The reality of precast concrete today.
         </p>

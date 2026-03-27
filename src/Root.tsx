@@ -9,13 +9,13 @@ import { Outro } from "./scenes/Outro";
 
 const FPS = 30;
 
-// Tight scene durations — voice length + 0.5s buffer
-const INTRO_S = 9;
-const PROBLEM_S = 31;
-const DESIGN_S = 41;
-const MODELING_S = 18;
-const WAREHOUSE_S = 25;
-const OUTRO_S = 17;
+// Tight durations — voice + 0.5s
+const INTRO_S = 8;
+const PROBLEM_S = 27;
+const DESIGN_S = 36;
+const MODELING_S = 16;
+const WAREHOUSE_S = 22;
+const OUTRO_S = 15;
 
 const TOTAL_S = INTRO_S + PROBLEM_S + DESIGN_S + MODELING_S + WAREHOUSE_S + OUTRO_S;
 
@@ -54,14 +54,7 @@ const BuildableDemo: React.FC = () => {
 export const RemotionRoot: React.FC = () => {
   return (
     <>
-      <Composition
-        id="BuildableDemo"
-        component={BuildableDemo}
-        durationInFrames={TOTAL_S * FPS}
-        fps={FPS}
-        width={1920}
-        height={1080}
-      />
+      <Composition id="BuildableDemo" component={BuildableDemo} durationInFrames={TOTAL_S * FPS} fps={FPS} width={1920} height={1080} />
       <Composition id="Intro" component={Intro} durationInFrames={INTRO_S * FPS} fps={FPS} width={1920} height={1080} />
       <Composition id="Problem" component={Problem} durationInFrames={PROBLEM_S * FPS} fps={FPS} width={1920} height={1080} />
       <Composition id="RealDesignStudio" component={RealDesignStudio} durationInFrames={DESIGN_S * FPS} fps={FPS} width={1920} height={1080} />

@@ -4,7 +4,7 @@ import { theme } from "../theme";
 
 export const Problem: React.FC = () => {
   const frame = useCurrentFrame();
-  // Total: 31s = 930 frames
+  // Total: 27s = 810 frames
 
   // Animated percentage
   const pct = Math.min(
@@ -25,13 +25,13 @@ export const Problem: React.FC = () => {
 
   // Pain point items
   const painPoints = [
-    { text: "Same templates", start: 100 },
-    { text: "Same beam sections", start: 150 },
-    { text: "Same rebar schedules", start: 200 },
-    { text: "Different numbers every time", start: 260 },
+    { text: "Same templates", start: 85 },
+    { text: "Same beam sections", start: 125 },
+    { text: "Same rebar schedules", start: 165 },
+    { text: "Different numbers every time", start: 215 },
   ];
 
-  const fadeOut = interpolate(frame, [905, 930], [1, 0], {
+  const fadeOut = interpolate(frame, [788, 810], [1, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
@@ -132,7 +132,7 @@ export const Problem: React.FC = () => {
 
       {/* Stats row — monochromatic, emphasis through size/weight only */}
       <div style={{ display: "flex", gap: 60 }}>
-        <FadeIn startFrame={360} slideY={8}>
+        <FadeIn startFrame={310} slideY={8}>
           <div style={{ textAlign: "center" }}>
             <div
               style={{
@@ -151,7 +151,7 @@ export const Problem: React.FC = () => {
           </div>
         </FadeIn>
 
-        <FadeIn startFrame={480} slideY={8}>
+        <FadeIn startFrame={420} slideY={8}>
           <div style={{ textAlign: "center" }}>
             <div
               style={{
@@ -170,7 +170,7 @@ export const Problem: React.FC = () => {
           </div>
         </FadeIn>
 
-        <FadeIn startFrame={660} slideY={8}>
+        <FadeIn startFrame={570} slideY={8}>
           <div style={{ textAlign: "center" }}>
             <div
               style={{

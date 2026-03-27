@@ -4,7 +4,7 @@ import { theme } from "../theme";
 
 export const Outro: React.FC = () => {
   const frame = useCurrentFrame();
-  // Total: 17s = 510 frames
+  // Total: 15s = 450 frames
 
   const logoOpacity = interpolate(frame, [0, 20], [0, 1], {
     extrapolateLeft: "clamp",
@@ -58,7 +58,7 @@ export const Outro: React.FC = () => {
       </div>
 
       {/* Buildable title */}
-      <FadeIn startFrame={140} slideY={10}>
+      <FadeIn startFrame={120} slideY={10}>
         <h1
           style={{
             fontSize: 60,
@@ -73,19 +73,19 @@ export const Outro: React.FC = () => {
       </FadeIn>
 
       {/* Tagline */}
-      <FadeIn startFrame={170}>
+      <FadeIn startFrame={150}>
         <p style={{ fontSize: 22, color: theme.textTertiary, fontWeight: 300 }}>
           Accelerate precast engineering.
         </p>
       </FadeIn>
 
-      <FadeIn startFrame={220}>
+      <FadeIn startFrame={195}>
         <p style={{ fontSize: 26, color: theme.textPrimary, fontWeight: 500, marginTop: 8 }}>
           Stop redrawing. Start building.
         </p>
       </FadeIn>
 
-      <FadeIn startFrame={300}>
+      <FadeIn startFrame={270}>
         <p
           style={{
             marginTop: 48,
