@@ -6,7 +6,7 @@ import { theme } from "../theme";
 
 export const RealDesignStudio: React.FC = () => {
   const frame = useCurrentFrame();
-  // Total: 42s = 1260 frames
+  // Total: 41s = 1230 frames
 
   const [svgContent, setSvgContent] = useState<string>("");
   const [handle] = useState(() => delayRender("Loading SVG"));
@@ -58,19 +58,19 @@ export const RealDesignStudio: React.FC = () => {
   // Pan & zoom — focus on each view as it appears, then pull back to full
   const svgScale = interpolate(
     frame,
-    [t + 30, t + 80, t + 200, t + 240, t + 360, t + 400, t + 500, 1200],
+    [t + 30, t + 80, t + 200, t + 240, t + 360, t + 400, t + 500, 1180],
     [1.8,    1.3,    1.3,     1.5,     1.5,     1.3,     1.05,   1.0],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
   const svgPanX = interpolate(
     frame,
-    [t + 30, t + 80, t + 200, t + 240, t + 360, t + 400, t + 500, 1200],
+    [t + 30, t + 80, t + 200, t + 240, t + 360, t + 400, t + 500, 1180],
     [200,    40,     40,      -120,    -120,    -180,    0,       0],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
   const svgPanY = interpolate(
     frame,
-    [t + 30, t + 80, t + 200, t + 240, t + 360, t + 400, t + 500, 1200],
+    [t + 30, t + 80, t + 200, t + 240, t + 360, t + 400, t + 500, 1180],
     [0,      0,      0,       -10,     -10,     -10,     0,       0],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
   );
@@ -85,7 +85,7 @@ export const RealDesignStudio: React.FC = () => {
     );
 
   // Fade out at end
-  const fadeOut = interpolate(frame, [1220, 1260], [1, 0], {
+  const fadeOut = interpolate(frame, [1205, 1230], [1, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });

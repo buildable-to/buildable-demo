@@ -4,7 +4,7 @@ import { theme } from "../theme";
 
 export const Problem: React.FC = () => {
   const frame = useCurrentFrame();
-  // Total: 32s = 960 frames
+  // Total: 31s = 930 frames
   // Voice: "Engineers spend 80% of their time drafting. The same templates..."
 
   // Animated percentage
@@ -37,7 +37,7 @@ export const Problem: React.FC = () => {
   // "one parameter change takes hours" ~16s(480f)
   // "75% still in AutoCAD" ~22s(660f)
 
-  const fadeOut = interpolate(frame, [920, 960], [1, 0], {
+  const fadeOut = interpolate(frame, [905, 930], [1, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });

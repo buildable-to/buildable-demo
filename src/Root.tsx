@@ -9,12 +9,12 @@ import { Outro } from "./scenes/Outro";
 
 const FPS = 30;
 
-// Scene durations matched to voice (rounded up + 1s buffer)
-const INTRO_S = 10;
-const PROBLEM_S = 32;
-const DESIGN_S = 42;
-const MODELING_S = 19;
-const WAREHOUSE_S = 26;
+// Tight scene durations — voice length + 0.5s buffer
+const INTRO_S = 9;
+const PROBLEM_S = 31;
+const DESIGN_S = 41;
+const MODELING_S = 18;
+const WAREHOUSE_S = 25;
 const OUTRO_S = 17;
 
 const TOTAL_S = INTRO_S + PROBLEM_S + DESIGN_S + MODELING_S + WAREHOUSE_S + OUTRO_S;
