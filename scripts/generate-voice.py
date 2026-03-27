@@ -65,7 +65,8 @@ SCENES = [
         "text": (
             "A hundred and fifty billion dollar industry. "
             "Eighty percent of project time on repetitive drawings. "
-            "Buildable. One description. Construction-ready output. In minutes."
+            "Buildable. Accelerate precast engineering. "
+            "Stop redrawing. Start building."
         ),
     },
 ]

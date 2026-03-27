@@ -271,56 +271,26 @@ export const RealModelingStudio: React.FC = () => {
           Rectangular Beam
         </div>
 
-        {/* Source code preview */}
-        <div style={{ padding: "12px", marginTop: 8 }}>
-          <div
-            style={{
-              fontSize: 10,
-              fontWeight: 600,
-              textTransform: "uppercase",
-              letterSpacing: 1.5,
-              color: theme.textTertiary,
-              marginBottom: 6,
-            }}
-          >
-            source.py
+        {/* Model details */}
+        <FadeIn startFrame={60} slideY={5}>
+          <div style={{ padding: "12px 14px", marginTop: 8 }}>
+            <div style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1.5, color: theme.textTertiary, marginBottom: 8 }}>
+              Details
+            </div>
+            {[
+              { label: "Size", value: "300 × 500 mm" },
+              { label: "Length", value: "6,000 mm" },
+              { label: "Rebars", value: "5 longitudinal" },
+              { label: "Stirrups", value: "42 @ 150mm" },
+              { label: "Bearing", value: "Pads × 2" },
+            ].map((item) => (
+              <div key={item.label} style={{ display: "flex", justifyContent: "space-between", padding: "3px 0", fontSize: 10, color: theme.textSecondary }}>
+                <span style={{ color: theme.textTertiary }}>{item.label}</span>
+                <span style={{ fontFamily: theme.fontMono, fontSize: 10 }}>{item.value}</span>
+              </div>
+            ))}
           </div>
-          <div
-            style={{
-              background: theme.bgVoid,
-              borderRadius: 6,
-              padding: 8,
-              fontSize: 9,
-              fontFamily: theme.fontMono,
-              color: theme.textTertiary,
-              lineHeight: 1.6,
-              overflow: "hidden",
-              maxHeight: 200,
-            }}
-          >
-            <span style={{ color: "#c678dd" }}>import</span>{" "}
-            <span style={{ color: theme.textSecondary }}>Part</span>
-            <br />
-            <span style={{ color: "#c678dd" }}>from</span>{" "}
-            <span style={{ color: theme.textSecondary }}>buildable.precast</span>
-            <br />
-            <br />
-            <span style={{ color: theme.textGhost }}># Beam: 300x500mm</span>
-            <br />
-            <span style={{ color: "#e5c07b" }}>beam</span>
-            <span style={{ color: theme.textTertiary }}> = Part.makeBox(</span>
-            <br />
-            <span style={{ color: "#d19a66" }}>{"  "}300, 500, 6000</span>
-            <span style={{ color: theme.textTertiary }}>)</span>
-            <br />
-            <br />
-            <span style={{ color: theme.textGhost }}># 42 stirrups @150mm</span>
-            <br />
-            <span style={{ color: "#c678dd" }}>for</span>{" "}
-            <span style={{ color: "#e5c07b" }}>i</span>
-            <span style={{ color: theme.textTertiary }}> in range(42):</span>
-          </div>
-        </div>
+        </FadeIn>
       </div>
 
       {/* Center — 3D Viewport with real GLB */}

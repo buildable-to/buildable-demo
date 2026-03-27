@@ -86,21 +86,25 @@ export const Outro: React.FC = () => {
       </FadeIn>
 
       {/* Tagline — matches voice */}
-      <FadeIn startFrame={180}>
+      <FadeIn startFrame={170}>
         <p style={{ fontSize: 24, color: theme.textSecondary, textAlign: "center", lineHeight: 1.6 }}>
-          One description. Construction-ready output.
-          <br />
-          <span style={{ color: theme.accent, fontWeight: 500 }}>In minutes.</span>
+          Accelerate precast engineering.
+        </p>
+      </FadeIn>
+
+      <FadeIn startFrame={220}>
+        <p style={{ fontSize: 28, color: theme.textPrimary, textAlign: "center", fontWeight: 600, marginTop: 8 }}>
+          Stop redrawing. <span style={{ color: theme.accent }}>Start building.</span>
         </p>
       </FadeIn>
 
       {/* Feature pills */}
-      <FadeIn startFrame={240} slideY={10}>
+      <FadeIn startFrame={280} slideY={10}>
         <div style={{ display: "flex", gap: 12, marginTop: 36 }}>
           {[
             { label: "2D Drawings", color: theme.accent },
             { label: "3D Models", color: theme.violet },
-            { label: "Precast Concrete", color: theme.green },
+            { label: "Cost Estimation", color: theme.green },
           ].map((pill) => (
             <div
               key={pill.label}
@@ -120,7 +124,7 @@ export const Outro: React.FC = () => {
         </div>
       </FadeIn>
 
-      <FadeIn startFrame={300}>
+      <FadeIn startFrame={340}>
         <p
           style={{
             marginTop: 44,
