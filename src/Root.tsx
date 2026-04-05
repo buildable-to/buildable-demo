@@ -1,36 +1,30 @@
 import "./index.css";
 import { Audio, Composition, Sequence, staticFile } from "remotion";
-import { Intro } from "./scenes/Intro";
-import { Problem } from "./scenes/Problem";
-import { RealDesignStudio } from "./scenes/RealDesignStudio";
-import { RealModelingStudio } from "./scenes/RealModelingStudio";
-import { WarehouseScene } from "./scenes/WarehouseScene";
-import { Outro } from "./scenes/Outro";
+import { WinTheProject } from "./scenes/WinTheProject";
+import { EngineerTheProject } from "./scenes/EngineerTheProject";
+import { RunTheBusiness } from "./scenes/RunTheBusiness";
+import { FinalCard } from "./scenes/FinalCard";
 
 const FPS = 30;
 
-// Tight durations — ElevenLabs voice + 0.5s
-const INTRO_S = 7;
-const PROBLEM_S = 25;
-const DESIGN_S = 37;
-const MODELING_S = 17;
-const WAREHOUSE_S = 25;
-const OUTRO_S = 14;
+// Scene durations in seconds (matched to ElevenLabs audio + 1s buffer)
+const WIN_S = 63;
+const ENGINEER_S = 75;
+const BUSINESS_S = 88;
+const FINAL_S = 8;
 
-const TOTAL_S = INTRO_S + PROBLEM_S + DESIGN_S + MODELING_S + WAREHOUSE_S + OUTRO_S;
+const TOTAL_S = WIN_S + ENGINEER_S + BUSINESS_S + FINAL_S;
 
 const voiceFiles = [
-  "voice/intro.mp3",
-  "voice/problem.mp3",
-  "voice/design-studio.mp3",
-  "voice/modeling-studio.mp3",
-  "voice/warehouse.mp3",
-  "voice/outro.mp3",
+  "voice/win-the-project.mp3",
+  "voice/engineer-the-project.mp3",
+  "voice/run-the-business.mp3",
+  "voice/final-card.mp3",
 ];
 
 const BuildableDemo: React.FC = () => {
-  const sceneDurations = [INTRO_S, PROBLEM_S, DESIGN_S, MODELING_S, WAREHOUSE_S, OUTRO_S];
-  const scenes = [Intro, Problem, RealDesignStudio, RealModelingStudio, WarehouseScene, Outro];
+  const sceneDurations = [WIN_S, ENGINEER_S, BUSINESS_S, FINAL_S];
+  const scenes = [WinTheProject, EngineerTheProject, RunTheBusiness, FinalCard];
 
   let offset = 0;
   const sceneEntries = scenes.map((Component, i) => {
@@ -55,12 +49,10 @@ export const RemotionRoot: React.FC = () => {
   return (
     <>
       <Composition id="BuildableDemo" component={BuildableDemo} durationInFrames={TOTAL_S * FPS} fps={FPS} width={3840} height={2160} />
-      <Composition id="Intro" component={Intro} durationInFrames={INTRO_S * FPS} fps={FPS} width={3840} height={2160} />
-      <Composition id="Problem" component={Problem} durationInFrames={PROBLEM_S * FPS} fps={FPS} width={3840} height={2160} />
-      <Composition id="RealDesignStudio" component={RealDesignStudio} durationInFrames={DESIGN_S * FPS} fps={FPS} width={3840} height={2160} />
-      <Composition id="RealModelingStudio" component={RealModelingStudio} durationInFrames={MODELING_S * FPS} fps={FPS} width={3840} height={2160} />
-      <Composition id="WarehouseScene" component={WarehouseScene} durationInFrames={WAREHOUSE_S * FPS} fps={FPS} width={3840} height={2160} />
-      <Composition id="Outro" component={Outro} durationInFrames={OUTRO_S * FPS} fps={FPS} width={3840} height={2160} />
+      <Composition id="WinTheProject" component={WinTheProject} durationInFrames={WIN_S * FPS} fps={FPS} width={3840} height={2160} />
+      <Composition id="EngineerTheProject" component={EngineerTheProject} durationInFrames={ENGINEER_S * FPS} fps={FPS} width={3840} height={2160} />
+      <Composition id="RunTheBusiness" component={RunTheBusiness} durationInFrames={BUSINESS_S * FPS} fps={FPS} width={3840} height={2160} />
+      <Composition id="FinalCard" component={FinalCard} durationInFrames={FINAL_S * FPS} fps={FPS} width={3840} height={2160} />
     </>
   );
 };
