@@ -7,10 +7,10 @@ import { FinalCard } from "./scenes/FinalCard";
 
 const FPS = 30;
 
-// Scene durations in seconds
-const WIN_S = 55;
-const ENGINEER_S = 55;
-const BUSINESS_S = 50;
+// Scene durations in seconds (matched to ElevenLabs audio + 1s buffer)
+const WIN_S = 63;
+const ENGINEER_S = 75;
+const BUSINESS_S = 88;
 const FINAL_S = 8;
 
 const TOTAL_S = WIN_S + ENGINEER_S + BUSINESS_S + FINAL_S;

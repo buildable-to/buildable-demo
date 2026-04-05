@@ -9,64 +9,75 @@ OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "..", "public", "voice")
 
 SCENES = [
     {
-        "name": "intro",
+        "name": "win-the-project",
         "text": (
-            "Two months of drawings. "
-            "Fifteen days of construction. "
-            "That's the reality of precast concrete today."
+            "Part one. Win the project. "
+            "A client sends you a brief. Five-story residential building, "
+            "precast sandwich wall panels, hollow core slabs, ground floor commercial space. "
+            "You type the description into Buildable. Hit generate. "
+            "In seconds, a full three-D model appears. "
+            "Every panel, every slab, columns at the ground floor, stairwell cores. "
+            "Color-coded by element type. "
+            "A cost panel slides in — structural elements, materials, labor, transport, installation. "
+            "Pricing calculated using your company's actual material and labor rates. "
+            "Change the floor height from three meters to three point two. "
+            "The model updates. The cost updates. New total, instantly. "
+            "What took your estimator two days of manual takeoff now takes two minutes. "
+            "And it's accurate enough for a client presentation. "
+            "You won the project. Now let's engineer it."
         ),
     },
     {
-        "name": "problem",
+        "name": "engineer-the-project",
         "text": (
-            "Engineers spend eighty percent of their time drafting. "
-            "The same templates. The same beam sections. The same rebar schedules. "
-            "Just different numbers, every single time. "
-            "One drawing error costs ten thousand dollars in rework. "
-            "One parameter change takes hours to propagate across every sheet. "
-            "And seventy-five percent of precast companies are still doing this in AutoCAD. Manually."
-        ),
-    },
-    {
-        "name": "design-studio",
-        "text": (
-            "Buildable changes that. "
-            "Describe your element in plain language. Dimensions, rebar, concrete class. "
-            "And get a complete, production-ready drawing in seconds. "
-            "This is a real beam detail. Elevation view, cross-sections, "
-            "rebar layout, stirrup spacing, and full dimensioning. "
-            "All following standard CAD layer conventions. Ready for the shop floor. "
-            "Change one parameter, and everything regenerates instantly. "
-            "No manual updates. No offshore coordination. No three-day revision cycles."
-        ),
-    },
-    {
-        "name": "modeling-studio",
-        "text": (
-            "For detailed engineering, describe an element and inspect it from any angle. "
-            "Toggle x-ray mode to see through the concrete and verify rebar placement. "
+            "Part two. Engineer the project. "
+            "Same three-D model, but now we zoom in. "
+            "Click on any element — the engineer selects beam B-01. "
+            "The shop drawing opens. Outline, dimensions, mark number. "
+            "AI-generated and ready for review. "
+            "Now the engineer adds detail. "
+            "Toggle x-ray mode to verify rebar placement inside the concrete. "
             "Switch to rebar-only view for reinforcement inspection. "
-            "Every element, fully reproducible."
+            "Then open the full shop drawing. "
+            "Elevation view, cross-sections, stirrup spacing, full dimensioning. "
+            "Change a parameter in the properties panel — spacing from two hundred to one fifty. "
+            "The drawing updates instantly. More stirrups appear, annotations update. "
+            "Ninety-six panels detailed. Thirty-four required corrections. "
+            "Sixty-two approved as generated. "
+            "Average engineer time per panel — four minutes. "
+            "Compare that to the manual baseline — forty-five minutes per panel. "
+            "Every correction makes the AI smarter. "
+            "Today, sixty-five percent auto-approved. Next month, eighty. Next year, ninety-five."
         ),
     },
     {
-        "name": "warehouse",
+        "name": "run-the-business",
         "text": (
-            "Before committing to a project, management needs a quick three-D model "
-            "for cost estimation and client presentations. "
-            "Describe the structure — dimensions, bays, element types — "
-            "and get a complete building model with over a hundred sixty precast elements. "
-            "Columns, beams, purlins, roof panels, wall panels, foundations. "
-            "All in minutes, ready to share with your client."
+            "Part three. Run the business. "
+            "The CEO opens Buildable Intelligence. "
+            "How much concrete do we need for all active projects this quarter? "
+            "A table appears — Tbilisi Residential, Rustavi Warehouse, Batumi Hotel. "
+            "Total across all projects: eighteen hundred ninety-five cubic meters. "
+            "Bulk ordering at this volume qualifies for the eight percent volume discount. "
+            "Compare cost estimates versus actual costs on completed projects. "
+            "A chart shows five past projects. One exceeded estimate by fifteen percent. "
+            "Primary driver — rebar weight was underestimated due to additional seismic reinforcement. "
+            "The AI recommends updating default seismic rebar ratios in your cost model. "
+            "Which engineer is most productive this month? "
+            "Nika — a hundred twenty-seven panels, three point eight minutes average, seventy-two percent auto-approve. "
+            "Can we take on the Zugdidi school project? We quoted forty-five days. "
+            "Based on current capacity, your team averages thirty-eight panels per day. "
+            "Realistic completion — May second. Thirteen days of buffer. Recommendation — accept the project. "
+            "Every project, every panel, every correction — all connected. "
+            "Your AI analyst doesn't forget, doesn't guess, and gets smarter every quarter."
         ),
     },
     {
-        "name": "outro",
+        "name": "final-card",
         "text": (
-            "A hundred and fifty billion dollar industry. "
-            "Eighty percent of project time on repetitive drawings. "
-            "Buildable. Accelerate precast engineering. "
-            "Reduce project timelines, two to three times."
+            "Buildable. "
+            "Win the project. Engineer it. Understand your business. "
+            "One platform."
         ),
     },
 ]
