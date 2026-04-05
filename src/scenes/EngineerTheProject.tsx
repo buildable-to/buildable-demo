@@ -740,7 +740,12 @@ export const EngineerTheProject: React.FC = () => {
     fetch(staticFile("assets/beam-drawing.svg"))
       .then((res) => res.text())
       .then((text) => {
-        setSvgContent(text);
+        // Strip massive mm dimensions so the SVG scales via viewBox
+        let svg = text;
+        svg = svg.replace(/(<svg[^>]*?)\s*width="[^"]*"/, '$1');
+        svg = svg.replace(/(<svg[^>]*?)\s*height="[^"]*"/, '$1');
+        svg = svg.replace(/<svg/, '<svg style="width:100%;height:100%;display:block"');
+        setSvgContent(svg);
         continueRender(handle);
       })
       .catch(() => continueRender(handle));

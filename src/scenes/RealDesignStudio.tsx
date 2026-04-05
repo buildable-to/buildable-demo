@@ -15,8 +15,12 @@ export const RealDesignStudio: React.FC = () => {
     fetch(staticFile("assets/beam-2d.svg"))
       .then((res) => res.text())
       .then((text) => {
-        // Fix the SVG for embedding: override background, adjust sizing
+        // Fix the SVG for embedding: scale to fit container and fix background
         let svg = text;
+        // Strip mm width/height attrs and add CSS sizing so viewBox scales properly
+        svg = svg.replace(/width="9264\.4mm"/, '');
+        svg = svg.replace(/height="3809\.3mm"/, '');
+        svg = svg.replace(/<svg/, '<svg style="width:100%;height:100%;display:block"');
         // Remove the transparent background rect
         svg = svg.replace(/fill-opacity="0\.0"/, 'fill-opacity="1.0"');
         setSvgContent(svg);
@@ -244,16 +248,23 @@ export const RealDesignStudio: React.FC = () => {
         {svgReveal > 0 && svgContent && (
           <div
             style={{
-              width: "95%",
-              height: "85%",
-              clipPath: `inset(0 ${100 - svgReveal}% 0 0)`,
-              transform: `scale(${svgScale}) translate(${svgPanX}px, ${svgPanY}px)`,
+              position: "absolute",
+              inset: 0,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              clipPath: `inset(0 ${100 - svgReveal}% 0 0)`,
+              transform: `scale(${svgScale}) translate(${svgPanX}px, ${svgPanY}px)`,
             }}
-            dangerouslySetInnerHTML={{ __html: svgContent }}
-          />
+          >
+            <div
+              style={{
+                width: "95%",
+                height: "85%",
+              }}
+              dangerouslySetInnerHTML={{ __html: svgContent }}
+            />
+          </div>
         )}
 
         {/* Empty state */}
