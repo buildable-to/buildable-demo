@@ -296,260 +296,316 @@ const ShopDrawingSVG: React.FC<{ spacing: number; frame: number; animStart: numb
   frame,
   animStart,
 }) => {
-  // Elevation view bounds
-  const eL = 100;
-  const eR = 1050;
-  const eT = 120;
-  const eB = 520;
-  const eW = eR - eL;
-  const eH = eB - eT;
+  // ── Coordinate system (mm → SVG units, scale ~1:4) ──
+  const s = 0.16; // scale factor: 1mm → 0.16 SVG units
+  const ox = 80;  // elevation view origin X
+  const oy = 190; // elevation view origin Y (bottom of beam)
 
-  // Stirrup tick marks based on spacing
+  // Elevation view
+  const eW = L * s;   // beam length in SVG
+  const eH = D * s;   // beam depth in SVG
+  const eT = oy - eH; // top of beam
+
+  // Cover/rebar positions
+  const coverPx = COVER * s;
+  const sDiaPx = S_DIA * s;
+  const botDiaPx = BOT_DIA * s;
+  const topDiaPx = TOP_DIA * s;
+  const barInset = (COVER + S_DIA) * s;
+  const botY = oy - coverPx - sDiaPx - botDiaPx / 2;
+  const topY = eT + coverPx + sDiaPx + topDiaPx / 2;
+
+  // Stirrup x-positions (matching building.js logic)
   const stirrupXs: number[] = [];
-  const closeZonePx = (S_CLOSE_ZONE / L) * eW;
-  // Close zone start
-  for (let px = 0; px <= closeZonePx; px += (S_CLOSE_SPACING / L) * eW) {
-    stirrupXs.push(eL + px);
-  }
-  // Mid zone
-  const midStartPx = closeZonePx + (spacing / L) * eW;
-  const midEndPx = eW - closeZonePx;
-  for (let px = midStartPx; px <= midEndPx; px += (spacing / L) * eW) {
-    stirrupXs.push(eL + px);
-  }
-  // Close zone end
-  for (let px = eW - closeZonePx; px <= eW; px += (S_CLOSE_SPACING / L) * eW) {
-    stirrupXs.push(eL + px);
-  }
+  for (let x = COVER; x <= Math.min(S_CLOSE_ZONE, L / 2); x += S_CLOSE_SPACING) stirrupXs.push(x);
+  const midStart = Math.min(S_CLOSE_ZONE, L / 2) + spacing;
+  for (let x = midStart; x <= L - S_CLOSE_ZONE; x += spacing) stirrupXs.push(x);
+  for (let x = L - COVER; x >= Math.max(L - S_CLOSE_ZONE, L / 2); x -= S_CLOSE_SPACING) stirrupXs.push(x);
+  const closeZonePx = S_CLOSE_ZONE * s;
 
-  // Cross-section bounds
-  const csL = 1120;
-  const csT = 160;
-  const csW = 200;
-  const csH = 400;
+  // Cross-section A-A (midspan)
+  const secGap = 130;
+  const secScale = 0.38; // larger scale for sections
+  const csAx = ox + eW + secGap;
+  const csAy = oy;
+  const csW2 = W * secScale;
+  const csH2 = D * secScale;
+  const csAyTop = csAy - csH2;
 
-  const drawProgress = interpolate(frame, [animStart, animStart + 60], [0, 1], clamp);
+  // Cross-section B-B (support)
+  const secSpacing = csW2 + 120;
+  const csBx = csAx + secSpacing;
+
+  // Concrete outline (row 2)
+  const row2Y = oy + 180;
+  const row2T = row2Y;
+
+  // Section C-C position
+  const csCx = ox + eW + secGap;
+  const csCy = row2Y + eH;
+
+  // Notes position
+  const notesX = csBx + csW2 + 60;
+
+  const drawProgress = interpolate(frame, [animStart, animStart + 40], [0, 1], clamp);
+
+  // Helper: dimension line with ticks
+  const DimH = ({ x1, x2, y, text }: { x1: number; x2: number; y: number; text: string }) => (
+    <g>
+      <line x1={x1} x2={x2} y1={y} y2={y} stroke="#FBBF24" strokeWidth="0.8" />
+      <line x1={x1} x2={x1} y1={y - 4} y2={y + 4} stroke="#FBBF24" strokeWidth="0.8" />
+      <line x1={x2} x2={x2} y1={y - 4} y2={y + 4} stroke="#FBBF24" strokeWidth="0.8" />
+      <text x={(x1 + x2) / 2} y={y - 3} fill="#FBBF24" fontSize="8" fontFamily="JetBrains Mono" textAnchor="middle">{text}</text>
+    </g>
+  );
+  const DimV = ({ x, y1, y2, text }: { x: number; y1: number; y2: number; text: string }) => (
+    <g>
+      <line x1={x} x2={x} y1={y1} y2={y2} stroke="#FBBF24" strokeWidth="0.8" />
+      <line x1={x - 4} x2={x + 4} y1={y1} y2={y1} stroke="#FBBF24" strokeWidth="0.8" />
+      <line x1={x - 4} x2={x + 4} y1={y2} y2={y2} stroke="#FBBF24" strokeWidth="0.8" />
+      <text x={x + 5} y={(y1 + y2) / 2 + 3} fill="#FBBF24" fontSize="8" fontFamily="JetBrains Mono">{text}</text>
+    </g>
+  );
 
   return (
     <svg
-      viewBox="0 0 1400 700"
-      style={{
-        width: "100%",
-        height: "100%",
-        opacity: drawProgress,
-      }}
+      viewBox="0 0 1650 550"
+      style={{ width: "100%", height: "100%", opacity: drawProgress }}
     >
-      {/* Arrow marker */}
       <defs>
-        <marker id="arrowL" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto">
-          <path d="M8,0 L0,3 L8,6" fill="none" stroke="#8B8D9A" strokeWidth="1" />
-        </marker>
-        <marker id="arrowR" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-          <path d="M0,0 L8,3 L0,6" fill="none" stroke="#8B8D9A" strokeWidth="1" />
-        </marker>
+        <pattern id="hatch" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="6" stroke="#3E3F4E" strokeWidth="0.5" />
+        </pattern>
       </defs>
 
-      {/* Title block */}
-      <text x="100" y="50" fill="#E8E9ED" fontSize="24" fontFamily="DM Sans" fontWeight="700">
-        BEAM B-01
+      {/* ═══════ ELEVATION VIEW ═══════ */}
+      <text x={ox + eW / 2} y={eT - 55} fill="#E8E9ED" fontSize="12" fontFamily="DM Sans" fontWeight="700" textAnchor="middle">
+        RECTANGULAR BEAM — ELEVATION
       </text>
-      <text x="100" y="78" fill="#8B8D9A" fontSize="16" fontFamily="DM Sans">
-        Elevation + Cross-Section &mdash; Scale 1:25
+      <text x={ox + eW / 2} y={eT - 40} fill="#565766" fontSize="8" fontFamily="JetBrains Mono" textAnchor="middle">
+        Scale 1:25
       </text>
 
-      {/* Concrete outline (elevation) */}
-      <rect
-        x={eL}
-        y={eT}
-        width={eW}
-        height={eH}
-        fill="none"
-        stroke="#8B8D9A"
-        strokeWidth="2"
-      />
+      {/* Concrete outline + hatch */}
+      <rect x={ox} y={eT} width={eW} height={eH} fill="url(#hatch)" stroke="#E8E9ED" strokeWidth="1.5" />
 
-      {/* Bottom rebar lines */}
-      {[0.3, 0.5, 0.7].map((frac, i) => (
-        <line
-          key={`bot-${i}`}
-          x1={eL + 20}
-          x2={eR - 20}
-          y1={eB - 40}
-          y2={eB - 40}
-          stroke="#c0392b"
-          strokeWidth="3"
-          transform={`translate(0, ${-i * 18})`}
-        />
-      ))}
+      {/* Zone boundary dashed lines */}
+      <line x1={ox + closeZonePx} x2={ox + closeZonePx} y1={eT} y2={oy} stroke="#565766" strokeWidth="0.6" strokeDasharray="4,3" />
+      <line x1={ox + eW - closeZonePx} x2={ox + eW - closeZonePx} y1={eT} y2={oy} stroke="#565766" strokeWidth="0.6" strokeDasharray="4,3" />
 
-      {/* Top rebar lines */}
-      {[0.35, 0.65].map((frac, i) => (
-        <line
-          key={`top-${i}`}
-          x1={eL + 20}
-          x2={eR - 20}
-          y1={eT + 40 + i * 16}
-          y2={eT + 40 + i * 16}
-          stroke="#c0392b"
-          strokeWidth="2.5"
-        />
-      ))}
-
-      {/* Stirrup tick marks */}
+      {/* Stirrup lines */}
       {stirrupXs.map((sx, i) => (
-        <line
-          key={`st-${i}`}
-          x1={sx}
-          x2={sx}
-          y1={eT + 8}
-          y2={eB - 8}
-          stroke="#27ae60"
-          strokeWidth="1.2"
-          opacity={0.7}
-        />
+        <line key={`st-${i}`} x1={ox + sx * s} x2={ox + sx * s} y1={eT + coverPx + sDiaPx / 2} y2={oy - coverPx - sDiaPx / 2} stroke="#27ae60" strokeWidth="0.8" opacity={0.8} />
       ))}
 
-      {/* Dimension: Length */}
-      <line
-        x1={eL}
-        x2={eR}
-        y1={eB + 50}
-        y2={eB + 50}
-        stroke="#8B8D9A"
-        strokeWidth="1"
-        markerStart="url(#arrowL)"
-        markerEnd="url(#arrowR)"
-      />
-      <text
-        x={(eL + eR) / 2}
-        y={eB + 45}
-        fill="#E8E9ED"
-        fontSize="16"
-        fontFamily="JetBrains Mono"
-        textAnchor="middle"
-      >
-        6000
-      </text>
+      {/* Bottom rebar (3 bars) */}
+      {Array.from({ length: BOT_COUNT }).map((_, i) => {
+        const zSpacing = (W - 2 * (COVER + S_DIA + BOT_DIA / 2));
+        const _z = COVER + S_DIA + BOT_DIA / 2 + (BOT_COUNT > 1 ? i * zSpacing / (BOT_COUNT - 1) : zSpacing / 2);
+        void _z;
+        return (
+          <line key={`bot-${i}`} x1={ox + barInset} x2={ox + eW - barInset} y1={botY - i * 3} y2={botY - i * 3} stroke="#c0392b" strokeWidth="2" />
+        );
+      })}
 
-      {/* Dimension: Depth */}
-      <line
-        x1={eL - 40}
-        x2={eL - 40}
-        y1={eT}
-        y2={eB}
-        stroke="#8B8D9A"
-        strokeWidth="1"
-        markerStart="url(#arrowL)"
-        markerEnd="url(#arrowR)"
-      />
-      <text
-        x={eL - 50}
-        y={(eT + eB) / 2}
-        fill="#E8E9ED"
-        fontSize="14"
-        fontFamily="JetBrains Mono"
-        textAnchor="middle"
-        transform={`rotate(-90, ${eL - 50}, ${(eT + eB) / 2})`}
-      >
-        600
-      </text>
+      {/* Top rebar (2 bars) */}
+      {Array.from({ length: TOP_COUNT }).map((_, i) => (
+        <line key={`top-${i}`} x1={ox + barInset} x2={ox + eW - barInset} y1={topY + i * 3} y2={topY + i * 3} stroke="#c0392b" strokeWidth="1.8" />
+      ))}
 
-      {/* Spacing annotations */}
-      <text x={eL + 10} y={eB + 80} fill="#27ae60" fontSize="13" fontFamily="JetBrains Mono">
-        {`Ø10 c/c ${S_CLOSE_SPACING}`}
-      </text>
-      <text x={(eL + eR) / 2 - 40} y={eB + 80} fill="#27ae60" fontSize="13" fontFamily="JetBrains Mono">
-        {`Ø10 c/c ${spacing}`}
-      </text>
-      <text x={eR - 130} y={eB + 80} fill="#27ae60" fontSize="13" fontFamily="JetBrains Mono">
-        {`Ø10 c/c ${S_CLOSE_SPACING}`}
-      </text>
+      {/* Section cut marks */}
+      {/* A-A at midspan */}
+      <line x1={ox + eW / 2} x2={ox + eW / 2} y1={oy + 10} y2={oy + 25} stroke="#808080" strokeWidth="0.8" strokeDasharray="6,2,2,2" />
+      <line x1={ox + eW / 2} x2={ox + eW / 2} y1={eT - 10} y2={eT - 25} stroke="#808080" strokeWidth="0.8" strokeDasharray="6,2,2,2" />
+      <text x={ox + eW / 2 - 8} y={oy + 35} fill="#808080" fontSize="9" fontFamily="DM Sans" fontWeight="600">A</text>
+      <text x={ox + eW / 2 + 4} y={oy + 35} fill="#808080" fontSize="9" fontFamily="DM Sans" fontWeight="600">A</text>
+      {/* B-B at support */}
+      <line x1={ox + closeZonePx / 2} x2={ox + closeZonePx / 2} y1={oy + 10} y2={oy + 25} stroke="#808080" strokeWidth="0.8" strokeDasharray="6,2,2,2" />
+      <line x1={ox + closeZonePx / 2} x2={ox + closeZonePx / 2} y1={eT - 10} y2={eT - 25} stroke="#808080" strokeWidth="0.8" strokeDasharray="6,2,2,2" />
+      <text x={ox + closeZonePx / 2 - 8} y={oy + 35} fill="#808080" fontSize="9" fontFamily="DM Sans" fontWeight="600">B</text>
+      <text x={ox + closeZonePx / 2 + 4} y={oy + 35} fill="#808080" fontSize="9" fontFamily="DM Sans" fontWeight="600">B</text>
+
+      {/* Dimensions — close zones + overall */}
+      <DimH x1={ox} x2={ox + closeZonePx} y={oy + 18} text={`${S_CLOSE_ZONE}`} />
+      <DimH x1={ox + closeZonePx} x2={ox + eW - closeZonePx} y={oy + 18} text={`${L - 2 * S_CLOSE_ZONE}`} />
+      <DimH x1={ox + eW - closeZonePx} x2={ox + eW} y={oy + 18} text={`${S_CLOSE_ZONE}`} />
+      <DimH x1={ox} x2={ox + eW} y={oy + 40} text="6000" />
+      <DimV x={ox + eW + 15} y1={eT} y2={oy} text="600" />
 
       {/* Rebar annotations */}
-      <text x={eR + 10} y={eT + 50} fill="#c0392b" fontSize="13" fontFamily="JetBrains Mono">
-        2{"Ø"}16 (top)
-      </text>
-      <text x={eR + 10} y={eB - 50} fill="#c0392b" fontSize="13" fontFamily="JetBrains Mono">
-        3{"Ø"}20 (bot)
-      </text>
+      <text x={ox + eW / 4} y={oy + 60} fill="#c0392b" fontSize="7" fontFamily="JetBrains Mono">01- 3T20 BOT</text>
+      <text x={ox + eW / 2} y={eT - 12} fill="#c0392b" fontSize="7" fontFamily="JetBrains Mono" textAnchor="middle">02- 2T16 TOP</text>
 
-      {/* Cross-section box */}
-      <rect
-        x={csL}
-        y={csT}
-        width={csW}
-        height={csH}
-        fill="none"
-        stroke="#8B8D9A"
-        strokeWidth="2"
-      />
-      <text
-        x={csL + csW / 2}
-        y={csT - 14}
-        fill="#E8E9ED"
-        fontSize="15"
-        fontFamily="DM Sans"
-        textAnchor="middle"
-        fontWeight="600"
-      >
-        Section A-A
-      </text>
+      {/* Stirrup spacing annotations */}
+      <text x={ox + closeZonePx / 2} y={oy + 52} fill="#27ae60" fontSize="6.5" fontFamily="JetBrains Mono" textAnchor="middle">03- T{S_DIA}@{S_CLOSE_SPACING}</text>
+      <text x={ox + eW / 2} y={oy + 52} fill="#27ae60" fontSize="6.5" fontFamily="JetBrains Mono" textAnchor="middle">03- T{S_DIA}@{spacing}</text>
+      <text x={ox + eW - closeZonePx / 2} y={oy + 52} fill="#27ae60" fontSize="6.5" fontFamily="JetBrains Mono" textAnchor="middle">03- T{S_DIA}@{S_CLOSE_SPACING}</text>
 
-      {/* Dimension: Width under cross-section */}
-      <line
-        x1={csL}
-        x2={csL + csW}
-        y1={csT + csH + 30}
-        y2={csT + csH + 30}
-        stroke="#8B8D9A"
-        strokeWidth="1"
-        markerStart="url(#arrowL)"
-        markerEnd="url(#arrowR)"
-      />
-      <text
-        x={csL + csW / 2}
-        y={csT + csH + 25}
-        fill="#E8E9ED"
-        fontSize="14"
-        fontFamily="JetBrains Mono"
-        textAnchor="middle"
-      >
-        300
-      </text>
+      <text x={ox + eW * 0.75} y={eT - 12} fill="#565766" fontSize="7" fontFamily="JetBrains Mono">b = {W}</text>
 
-      {/* Cross-section top rebar circles (2) */}
-      {[0.35, 0.65].map((frac, i) => (
-        <circle
-          key={`cs-top-${i}`}
-          cx={csL + csW * frac}
-          cy={csT + 35}
-          r={8}
-          fill="#c0392b"
-        />
+      {/* ═══════ SECTION A-A (Midspan) ═══════ */}
+      <text x={csAx + csW2 / 2} y={csAyTop - 30} fill="#E8E9ED" fontSize="11" fontFamily="DM Sans" fontWeight="700" textAnchor="middle">SECTION A-A</text>
+      <text x={csAx + csW2 / 2} y={csAyTop - 17} fill="#565766" fontSize="7" fontFamily="JetBrains Mono" textAnchor="middle">Midspan — 1:10</text>
+
+      {/* Concrete + hatch */}
+      <rect x={csAx} y={csAyTop} width={csW2} height={csH2} fill="url(#hatch)" stroke="#E8E9ED" strokeWidth="1.2" />
+
+      {/* Stirrup outline */}
+      {(() => {
+        const inset = (COVER + S_DIA / 2) * secScale;
+        return <rect x={csAx + inset} y={csAyTop + inset} width={csW2 - 2 * inset} height={csH2 - 2 * inset} fill="none" stroke="#27ae60" strokeWidth="1.5" rx="2" />;
+      })()}
+
+      {/* Bottom rebar circles (3) */}
+      {Array.from({ length: BOT_COUNT }).map((_, i) => {
+        const inset = (COVER + S_DIA + BOT_DIA / 2) * secScale;
+        const span = csW2 - 2 * inset;
+        const cx = csAx + inset + (BOT_COUNT > 1 ? i * span / (BOT_COUNT - 1) : span / 2);
+        const cy = csAy - inset;
+        return <circle key={`csA-bot-${i}`} cx={cx} cy={cy} r={Math.max(BOT_DIA / 2 * secScale, 4)} fill="#c0392b" />;
+      })}
+
+      {/* Top rebar circles (2) */}
+      {Array.from({ length: TOP_COUNT }).map((_, i) => {
+        const inset = (COVER + S_DIA + TOP_DIA / 2) * secScale;
+        const span = csW2 - 2 * inset;
+        const cx = csAx + inset + (TOP_COUNT > 1 ? i * span / (TOP_COUNT - 1) : span / 2);
+        const cy = csAyTop + inset;
+        return <circle key={`csA-top-${i}`} cx={cx} cy={cy} r={Math.max(TOP_DIA / 2 * secScale, 3.5)} fill="#c0392b" />;
+      })}
+
+      {/* Dimensions */}
+      <DimH x1={csAx} x2={csAx + csW2} y={csAy + 12} text="300" />
+      <DimV x={csAx + csW2 + 12} y1={csAyTop} y2={csAy} text="600" />
+      <DimV x={csAx - 10} y1={csAyTop} y2={csAyTop + COVER * secScale} text={`c=${COVER}`} />
+
+      {/* Annotations */}
+      <text x={csAx + csW2 / 2} y={csAy + 26} fill="#c0392b" fontSize="7" fontFamily="JetBrains Mono" textAnchor="middle">01- 3T20</text>
+      <text x={csAx + csW2 / 2} y={csAyTop - 6} fill="#c0392b" fontSize="7" fontFamily="JetBrains Mono" textAnchor="middle">02- 2T16</text>
+      <text x={csAx + csW2 / 2} y={csAy + 36} fill="#27ae60" fontSize="6.5" fontFamily="JetBrains Mono" textAnchor="middle">03- T{S_DIA}@{spacing}</text>
+
+      {/* ═══════ SECTION B-B (Support) ═══════ */}
+      <text x={csBx + csW2 / 2} y={csAyTop - 30} fill="#E8E9ED" fontSize="11" fontFamily="DM Sans" fontWeight="700" textAnchor="middle">SECTION B-B</text>
+      <text x={csBx + csW2 / 2} y={csAyTop - 17} fill="#565766" fontSize="7" fontFamily="JetBrains Mono" textAnchor="middle">Support — 1:10</text>
+
+      <rect x={csBx} y={csAyTop} width={csW2} height={csH2} fill="url(#hatch)" stroke="#E8E9ED" strokeWidth="1.2" />
+      {(() => {
+        const inset = (COVER + S_DIA / 2) * secScale;
+        return <rect x={csBx + inset} y={csAyTop + inset} width={csW2 - 2 * inset} height={csH2 - 2 * inset} fill="none" stroke="#27ae60" strokeWidth="1.5" rx="2" />;
+      })()}
+
+      {/* Bottom rebar circles (3) */}
+      {Array.from({ length: BOT_COUNT }).map((_, i) => {
+        const inset = (COVER + S_DIA + BOT_DIA / 2) * secScale;
+        const span = csW2 - 2 * inset;
+        const cx = csBx + inset + (BOT_COUNT > 1 ? i * span / (BOT_COUNT - 1) : span / 2);
+        const cy = csAy - inset;
+        return <circle key={`csB-bot-${i}`} cx={cx} cy={cy} r={Math.max(BOT_DIA / 2 * secScale, 4)} fill="#c0392b" />;
+      })}
+      {Array.from({ length: TOP_COUNT }).map((_, i) => {
+        const inset = (COVER + S_DIA + TOP_DIA / 2) * secScale;
+        const span = csW2 - 2 * inset;
+        const cx = csBx + inset + (TOP_COUNT > 1 ? i * span / (TOP_COUNT - 1) : span / 2);
+        const cy = csAyTop + inset;
+        return <circle key={`csB-top-${i}`} cx={cx} cy={cy} r={Math.max(TOP_DIA / 2 * secScale, 3.5)} fill="#c0392b" />;
+      })}
+
+      <DimH x1={csBx} x2={csBx + csW2} y={csAy + 12} text="300" />
+      <DimV x={csBx + csW2 + 12} y1={csAyTop} y2={csAy} text="600" />
+      <text x={csBx + csW2 / 2} y={csAy + 26} fill="#c0392b" fontSize="7" fontFamily="JetBrains Mono" textAnchor="middle">01- 3T20</text>
+      <text x={csBx + csW2 / 2} y={csAy + 36} fill="#27ae60" fontSize="6.5" fontFamily="JetBrains Mono" textAnchor="middle">03- T{S_DIA}@{S_CLOSE_SPACING}</text>
+
+      {/* ═══════ CONCRETE OUTLINE (Row 2) ═══════ */}
+      <text x={ox + eW / 2} y={row2T - 10} fill="#E8E9ED" fontSize="10" fontFamily="DM Sans" fontWeight="700" textAnchor="middle">CONCRETE OUTLINE</text>
+      <text x={ox + eW / 2} y={row2T + 2} fill="#565766" fontSize="7" fontFamily="JetBrains Mono" textAnchor="middle">Scale 1:25</text>
+
+      {/* Chamfered outline */}
+      {(() => {
+        const ch = 25 * s; // chamfer in SVG
+        const x0 = ox, y0 = row2T + 12, w = eW, h = eH;
+        return (
+          <path
+            d={`M${x0 + ch},${y0} L${x0 + w - ch},${y0} L${x0 + w},${y0 + ch} L${x0 + w},${y0 + h - ch} L${x0 + w - ch},${y0 + h} L${x0 + ch},${y0 + h} L${x0},${y0 + h - ch} L${x0},${y0 + ch} Z`}
+            fill="none" stroke="#E8E9ED" strokeWidth="1.2"
+          />
+        );
+      })()}
+
+      {/* Lifting inserts X marks */}
+      {[eW / 5, eW - eW / 5].map((lx, i) => (
+        <g key={`lift-${i}`}>
+          <line x1={ox + lx - 5} x2={ox + lx + 5} y1={row2T + 12 + eH / 2 - 5} y2={row2T + 12 + eH / 2 + 5} stroke="#808080" strokeWidth="1" strokeDasharray="4,2,2,2" />
+          <line x1={ox + lx + 5} x2={ox + lx - 5} y1={row2T + 12 + eH / 2 - 5} y2={row2T + 12 + eH / 2 + 5} stroke="#808080" strokeWidth="1" strokeDasharray="4,2,2,2" />
+          <text x={ox + lx} y={row2T + 12 + eH + 18} fill="#565766" fontSize="5.5" fontFamily="JetBrains Mono" textAnchor="middle">LIFTING INSERT</text>
+        </g>
       ))}
 
-      {/* Cross-section bottom rebar circles (3) */}
-      {[0.25, 0.5, 0.75].map((frac, i) => (
-        <circle
-          key={`cs-bot-${i}`}
-          cx={csL + csW * frac}
-          cy={csT + csH - 35}
-          r={10}
-          fill="#c0392b"
-        />
+      {/* Weight annotation */}
+      {(() => {
+        const wt = (L * W * D * 2500) / 1e12;
+        return <text x={ox + eW / 2} y={row2T + 12 + eH + 32} fill="#E8E9ED" fontSize="7" fontFamily="JetBrains Mono" textAnchor="middle">WEIGHT: {wt.toFixed(1)} t</text>;
+      })()}
+      <text x={ox + eW / 2} y={row2T + 12 + eH + 42} fill="#565766" fontSize="6.5" fontFamily="JetBrains Mono" textAnchor="middle">b = {W}</text>
+
+      {/* ═══════ SECTION C-C (Concrete Only) ═══════ */}
+      <text x={csCx + csW2 / 2} y={row2T - 10} fill="#E8E9ED" fontSize="10" fontFamily="DM Sans" fontWeight="700" textAnchor="middle">SECTION C-C</text>
+      <text x={csCx + csW2 / 2} y={row2T + 2} fill="#565766" fontSize="7" fontFamily="JetBrains Mono" textAnchor="middle">Concrete Only — 1:10</text>
+
+      {(() => {
+        const ch = 25 * secScale;
+        const x0 = csCx, y0 = row2T + 12, w = csW2, h = csH2;
+        return (
+          <g>
+            <path
+              d={`M${x0 + ch},${y0} L${x0 + w - ch},${y0} L${x0 + w},${y0 + ch} L${x0 + w},${y0 + h - ch} L${x0 + w - ch},${y0 + h} L${x0 + ch},${y0 + h} L${x0},${y0 + h - ch} L${x0},${y0 + ch} Z`}
+              fill="none" stroke="#E8E9ED" strokeWidth="1.2"
+            />
+            {/* Cover zone dashed */}
+            <rect x={x0 + COVER * secScale} y={y0 + COVER * secScale} width={w - 2 * COVER * secScale} height={h - 2 * COVER * secScale} fill="none" stroke="#565766" strokeWidth="0.6" strokeDasharray="3,2" />
+          </g>
+        );
+      })()}
+      <DimH x1={csCx} x2={csCx + csW2} y={csCy + 24} text="300" />
+      <DimV x={csCx + csW2 + 12} y1={row2T + 12} y2={csCy + 12} text="600" />
+      <text x={csCx + csW2 / 2} y={csCy + 38} fill="#565766" fontSize="6" fontFamily="JetBrains Mono" textAnchor="middle">25×25 CHAMFER</text>
+
+      {/* ═══════ GENERAL NOTES ═══════ */}
+      <text x={notesX} y={eT - 30} fill="#E8E9ED" fontSize="10" fontFamily="DM Sans" fontWeight="700">GENERAL NOTES</text>
+      {[
+        `CONCRETE: C30/37`,
+        `STEEL: B500B`,
+        `COVER: ${COVER}mm`,
+        `DIMS IN mm`,
+      ].map((note, i) => (
+        <text key={`note-${i}`} x={notesX} y={eT - 14 + i * 14} fill="#8B8D9A" fontSize="7" fontFamily="JetBrains Mono">{`${i + 1}. ${note}`}</text>
       ))}
 
-      {/* Stirrup outline in cross-section */}
-      <rect
-        x={csL + 20}
-        y={csT + 15}
-        width={csW - 40}
-        height={csH - 30}
-        fill="none"
-        stroke="#27ae60"
-        strokeWidth="2"
-        rx="3"
-      />
+      {/* ═══════ STIRRUP DETAIL ═══════ */}
+      {(() => {
+        const sdX = notesX;
+        const sdY = row2T + 12;
+        const bend = 2 * S_DIA * secScale;
+        const wInt = (W - 2 * (COVER + S_DIA / 2)) * secScale;
+        const hInt = (D - 2 * (COVER + S_DIA / 2)) * secScale;
+
+        return (
+          <g>
+            <text x={sdX + wInt / 2} y={sdY - 12} fill="#E8E9ED" fontSize="9" fontFamily="DM Sans" fontWeight="700" textAnchor="middle">STIRRUP DETAIL 03</text>
+            <text x={sdX + wInt / 2} y={sdY - 2} fill="#565766" fontSize="6" fontFamily="JetBrains Mono" textAnchor="middle">Scale 1:5</text>
+
+            {/* Stirrup rectangular outline with rounded corners */}
+            <rect x={sdX} y={sdY + 8} width={wInt} height={hInt} fill="none" stroke="#27ae60" strokeWidth="2" rx={bend} />
+
+            {/* Hook tails (45° at top-left) */}
+            <line x1={sdX} x2={sdX - 8} y1={sdY + 8 + bend} y2={sdY + 8 + bend - 8} stroke="#27ae60" strokeWidth="2" />
+            <line x1={sdX + bend} x2={sdX + bend - 8} y1={sdY + 8} y2={sdY - 2} stroke="#27ae60" strokeWidth="2" />
+
+            {/* Inner dimensions */}
+            <DimH x1={sdX} x2={sdX + wInt} y={sdY + hInt + 20} text={`${Math.round(W - 2 * (COVER + S_DIA / 2))}`} />
+            <DimV x={sdX - 16} y1={sdY + 8} y2={sdY + 8 + hInt} text={`${Math.round(D - 2 * (COVER + S_DIA / 2))}`} />
+          </g>
+        );
+      })()}
     </svg>
   );
 };
