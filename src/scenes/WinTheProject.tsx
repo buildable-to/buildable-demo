@@ -45,13 +45,72 @@ const BuildingCameraRig: React.FC<{ frame: number }> = ({ frame }) => {
 };
 
 // ---------------------------------------------------------------------------
-// BuildingModel — loads real GLB model (same pattern as WarehouseScene)
+// Mesh classification for highlight system
 // ---------------------------------------------------------------------------
-const BuildingModel: React.FC = () => {
+type ElementGroup = "walls" | "slabs" | "columns" | "glass" | "metal" | "ground" | "other";
+
+function classifyMesh(name: string, matName: string): ElementGroup {
+  const n = name.toLowerCase();
+  const m = matName.toLowerCase();
+  if (m.includes("wall_paint") || m.includes("wall paint")) return "walls";
+  if (m.includes("ceramic")) return "ground";
+  if (m.includes("solid_glass") || m.includes("glass")) return "glass";
+  if (m.includes("metal") || m.includes("aluminum")) return "metal";
+  if (m.includes("car_paint") || m.includes("car paint")) return "other";
+  // Box nodes with default materials → structural (columns/beams/slabs)
+  if (n.startsWith("box")) return "columns";
+  // Line nodes → railings/details
+  if (n.startsWith("line")) return "metal";
+  // Shape → slabs
+  if (n.startsWith("shape")) return "slabs";
+  // Cone → trees/decorative
+  if (n.startsWith("cone")) return "other";
+  return "other";
+}
+
+// Highlight colors per cost panel row (matching structural element order)
+const HIGHLIGHT_COLORS: Record<string, THREE.Color> = {
+  walls: new THREE.Color(0.3, 0.5, 1.0),    // blue for wall panels
+  slabs: new THREE.Color(0.2, 0.7, 0.9),    // cyan for hollow core
+  columns: new THREE.Color(0.6, 0.4, 1.0),  // violet for columns
+  metal: new THREE.Color(0.9, 0.6, 0.2),    // amber for beams
+  glass: new THREE.Color(0.3, 0.5, 1.0),    // blue (part of walls)
+};
+
+// Map cost panel row index to element groups that should glow
+const ROW_TO_GROUPS: ElementGroup[][] = [
+  ["walls", "glass"],  // Row 0: Wall Panels
+  ["slabs"],           // Row 1: Hollow Core
+  ["columns"],         // Row 2: Columns
+  ["metal"],           // Row 3: Beams
+  ["other"],           // Row 4: Stairs
+];
+
+// ---------------------------------------------------------------------------
+// BuildingModel — loads real GLB model with highlight system
+// ---------------------------------------------------------------------------
+const BuildingModel: React.FC<{ activeRow: number }> = ({ activeRow }) => {
   const glb = useGLTF(staticFile("assets/building-3d.glb"));
 
-  const { clonedScene, scale, offset } = useMemo(() => {
+  const { clonedScene, scale, offset, meshGroups } = useMemo(() => {
     const cloned = glb.scene.clone(true);
+
+    // Classify meshes into groups and store original materials
+    const groups = new Map<ElementGroup, THREE.Mesh[]>();
+    cloned.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        const matName = (child.material as THREE.MeshStandardMaterial)?.name || "";
+        const group = classifyMesh(child.name, matName);
+        child.userData._group = group;
+        // Clone material so we can modify emissive per-mesh
+        if (child.material) {
+          child.material = (child.material as THREE.MeshStandardMaterial).clone();
+        }
+        if (!groups.has(group)) groups.set(group, []);
+        groups.get(group)!.push(child);
+      }
+    });
+
     const box = new THREE.Box3().setFromObject(cloned);
     const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3());
@@ -61,17 +120,33 @@ const BuildingModel: React.FC = () => {
       clonedScene: cloned,
       scale: s,
       offset: new THREE.Vector3(-center.x * s, -box.min.y * s, -center.z * s),
+      meshGroups: groups,
     };
   }, [glb.scene]);
 
+  // Update emissive highlights based on active row
   useEffect(() => {
-    clonedScene.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        child.castShadow = true;
-        child.receiveShadow = true;
-      }
+    const activeGroups = activeRow >= 0 && activeRow < ROW_TO_GROUPS.length
+      ? ROW_TO_GROUPS[activeRow]
+      : [];
+
+    meshGroups.forEach((meshes, group) => {
+      const isActive = activeGroups.includes(group);
+      const highlightColor = HIGHLIGHT_COLORS[group] || new THREE.Color(0, 0, 0);
+      meshes.forEach((mesh) => {
+        const mat = mesh.material as THREE.MeshStandardMaterial;
+        if (mat && mat.emissive) {
+          if (isActive) {
+            mat.emissive.copy(highlightColor);
+            mat.emissiveIntensity = 0.6;
+          } else {
+            mat.emissive.set(0, 0, 0);
+            mat.emissiveIntensity = 0;
+          }
+        }
+      });
     });
-  }, [clonedScene]);
+  }, [activeRow, meshGroups]);
 
   return (
     <group scale={[scale, scale, scale]} position={[offset.x, offset.y, offset.z]}>
@@ -448,7 +523,11 @@ export const WinTheProject: React.FC = () => {
               <hemisphereLight args={["#b1e1ff", "#b97a20", 0.25]} />
               <BuildingCameraRig frame={frame} />
               <group scale={[buildingScale, buildingScale, buildingScale]}>
-                <BuildingModel />
+                <BuildingModel activeRow={
+                  frame >= 800 && frame < 960
+                    ? Math.min(4, Math.floor((frame - 800) / 20))
+                    : -1
+                } />
               </group>
             </ThreeCanvas>
           </div>
