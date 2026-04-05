@@ -1,29 +1,274 @@
-import React from "react";
+import React, { useMemo, useEffect } from "react";
 import { useCurrentFrame, interpolate, staticFile, Img } from "remotion";
-import { TypeWriter } from "../components/TypeWriter";
+import { ThreeCanvas } from "@remotion/three";
+import { useThree } from "@react-three/fiber";
+import * as THREE from "three";
 import { FadeIn } from "../components/FadeIn";
 import { theme } from "../theme";
 
-// ── Frame ranges ────────────────────────────────────────────────────
-const P1_START = 0;
-const P2_START = 150;
-const P3_START = 300;
-const P4_START = 660;
-const P5_START = 900;
-const P6_START = 1140;
-const P7_START = 1260;
-const P8_START = 1440;
+// ── Constants ───────────────────────────────────────────────────────
+const clamp = {
+  extrapolateLeft: "clamp" as const,
+  extrapolateRight: "clamp" as const,
+};
 
-const TOTAL_FRAMES = 1650;
+// Beam params (mm)
+const L = 6000;
+const D = 600;
+const W = 300;
+const COVER = 40;
+const BOT_COUNT = 3;
+const BOT_DIA = 20;
+const TOP_COUNT = 2;
+const TOP_DIA = 16;
+const S_DIA = 10;
+const S_SPACING = 200;
+const S_CLOSE_SPACING = 100;
+const S_CLOSE_ZONE = 1200;
 
-// ── Helper: clamp shortcut ──────────────────────────────────────────
-const clamp = { extrapolateLeft: "clamp" as const, extrapolateRight: "clamp" as const };
+// Scale factor: mm -> three.js units
+const SC = 1 / 4000;
+
+// ── Pre-created Materials (module-level, never recreated) ───────────
+const CONCRETE_MAT = new THREE.MeshStandardMaterial({
+  color: 0xb0b0b0,
+  roughness: 0.7,
+  metalness: 0.1,
+});
+const CONCRETE_SELECTED_MAT = new THREE.MeshStandardMaterial({
+  color: 0x818cf8,
+  roughness: 0.7,
+  metalness: 0.1,
+});
+const REBAR_MAT = new THREE.MeshStandardMaterial({
+  color: 0xc0392b,
+  roughness: 0.4,
+  metalness: 0.3,
+});
+const STIRRUP_MAT = new THREE.MeshStandardMaterial({
+  color: 0x27ae60,
+  roughness: 0.5,
+  metalness: 0.2,
+});
+const WIRE_MAT = new THREE.LineBasicMaterial({ color: 0x555566 });
+
+// ── Beam Camera Rig ─────────────────────────────────────────────────
+const BeamCameraRig: React.FC<{ frame: number }> = ({ frame }) => {
+  const { camera } = useThree();
+
+  // Phase-based camera control
+  const angle = interpolate(
+    frame,
+    [0, 120, 180, 280, 350, 420, 1130, 1200],
+    [0.4, 1.2, 1.6, 2.4, 2.8, 3.4, 3.8, 4.2],
+    clamp
+  );
+  const elevation = interpolate(
+    frame,
+    [0, 120, 280, 420, 1130, 1200],
+    [0.5, 0.3, 0.5, 0.35, 0.4, 0.3],
+    clamp
+  );
+  const dist = interpolate(
+    frame,
+    [0, 30, 120, 350, 1130, 1200],
+    [3.0, 2.2, 2.0, 2.2, 2.0, 2.4],
+    clamp
+  );
+
+  camera.position.set(
+    Math.cos(angle) * dist,
+    elevation,
+    Math.sin(angle) * dist
+  );
+  camera.lookAt(0, -0.02, 0);
+  camera.updateProjectionMatrix();
+
+  return null;
+};
+
+// ── Beam Model ──────────────────────────────────────────────────────
+const BeamModel: React.FC<{
+  viewMode: "normal" | "xray" | "rebar";
+  selected: boolean;
+  xrayProgress: number;
+}> = ({ viewMode, selected, xrayProgress }) => {
+  const beamGeo = useMemo(() => {
+    const group = new THREE.Group();
+
+    // Concrete box
+    const concreteGeo = new THREE.BoxGeometry(L * SC, D * SC, W * SC);
+    const concreteMesh = new THREE.Mesh(concreteGeo, CONCRETE_MAT);
+    concreteMesh.name = "concrete";
+    group.add(concreteMesh);
+
+    // Wireframe edges
+    const edgesGeo = new THREE.EdgesGeometry(concreteGeo);
+    const wireframe = new THREE.LineSegments(edgesGeo, WIRE_MAT);
+    wireframe.name = "wireframe";
+    group.add(wireframe);
+
+    // Bottom rebar (3 bars)
+    const botY = (-D / 2 + COVER + S_DIA + BOT_DIA / 2) * SC;
+    const barLen = (L - 2 * (COVER + S_DIA)) * SC;
+    const botRadius = (BOT_DIA / 2) * SC;
+    const innerW = W - 2 * (COVER + S_DIA);
+    for (let i = 0; i < BOT_COUNT; i++) {
+      const z =
+        (-innerW / 2 + (innerW / (BOT_COUNT - 1)) * i) * SC;
+      const rebarGeo = new THREE.CylinderGeometry(
+        botRadius,
+        botRadius,
+        barLen,
+        8
+      );
+      rebarGeo.rotateZ(Math.PI / 2);
+      const mesh = new THREE.Mesh(rebarGeo, REBAR_MAT);
+      mesh.position.set(0, botY, z);
+      mesh.name = "rebar";
+      group.add(mesh);
+    }
+
+    // Top rebar (2 bars)
+    const topY = (D / 2 - COVER - S_DIA - TOP_DIA / 2) * SC;
+    const topRadius = (TOP_DIA / 2) * SC;
+    for (let i = 0; i < TOP_COUNT; i++) {
+      const z =
+        (-innerW / 2 + (innerW / (TOP_COUNT - 1)) * i) * SC;
+      const rebarGeo = new THREE.CylinderGeometry(
+        topRadius,
+        topRadius,
+        barLen,
+        8
+      );
+      rebarGeo.rotateZ(Math.PI / 2);
+      const mesh = new THREE.Mesh(rebarGeo, REBAR_MAT);
+      mesh.position.set(0, topY, z);
+      mesh.name = "rebar";
+      group.add(mesh);
+    }
+
+    // Stirrup positions
+    const stirrupPositions: number[] = [];
+    // Close zone start
+    for (
+      let x = -L / 2 + COVER;
+      x <= -L / 2 + S_CLOSE_ZONE;
+      x += S_CLOSE_SPACING
+    ) {
+      stirrupPositions.push(x);
+    }
+    // Mid zone
+    const midStart = -L / 2 + S_CLOSE_ZONE + S_SPACING;
+    const midEnd = L / 2 - S_CLOSE_ZONE;
+    for (let x = midStart; x <= midEnd; x += S_SPACING) {
+      stirrupPositions.push(x);
+    }
+    // Close zone end
+    for (
+      let x = L / 2 - S_CLOSE_ZONE;
+      x <= L / 2 - COVER;
+      x += S_CLOSE_SPACING
+    ) {
+      stirrupPositions.push(x);
+    }
+
+    const sInnerH = (D - 2 * COVER) * SC;
+    const sInnerW = (W - 2 * COVER) * SC;
+
+    stirrupPositions.forEach((xPos) => {
+      const x = xPos * SC;
+      const thickness = S_DIA * SC;
+
+      // Top bar
+      const topBar = new THREE.Mesh(
+        new THREE.BoxGeometry(thickness, thickness, sInnerW),
+        STIRRUP_MAT
+      );
+      topBar.position.set(x, (D / 2 - COVER - S_DIA / 2) * SC, 0);
+      topBar.name = "stirrup";
+      group.add(topBar);
+
+      // Bottom bar
+      const botBar = new THREE.Mesh(
+        new THREE.BoxGeometry(thickness, thickness, sInnerW),
+        STIRRUP_MAT
+      );
+      botBar.position.set(
+        x,
+        (-D / 2 + COVER + S_DIA / 2) * SC,
+        0
+      );
+      botBar.name = "stirrup";
+      group.add(botBar);
+
+      // Left bar
+      const leftBar = new THREE.Mesh(
+        new THREE.BoxGeometry(thickness, sInnerH, thickness),
+        STIRRUP_MAT
+      );
+      leftBar.position.set(x, 0, (-W / 2 + COVER + S_DIA / 2) * SC);
+      leftBar.name = "stirrup";
+      group.add(leftBar);
+
+      // Right bar
+      const rightBar = new THREE.Mesh(
+        new THREE.BoxGeometry(thickness, sInnerH, thickness),
+        STIRRUP_MAT
+      );
+      rightBar.position.set(x, 0, (W / 2 - COVER - S_DIA / 2) * SC);
+      rightBar.name = "stirrup";
+      group.add(rightBar);
+    });
+
+    return group;
+  }, []);
+
+  // Update materials based on viewMode
+  useEffect(() => {
+    beamGeo.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        if (child.name === "concrete") {
+          if (viewMode === "rebar") {
+            child.visible = false;
+          } else {
+            child.visible = true;
+            const mat = selected ? CONCRETE_SELECTED_MAT : CONCRETE_MAT;
+            child.material = mat;
+            if (viewMode === "xray") {
+              mat.transparent = true;
+              mat.opacity = interpolate(xrayProgress, [0, 1], [1.0, 0.25]);
+              mat.depthWrite = xrayProgress < 0.5;
+              mat.needsUpdate = true;
+            } else {
+              mat.transparent = false;
+              mat.opacity = 1.0;
+              mat.depthWrite = true;
+              mat.needsUpdate = true;
+            }
+          }
+        } else if (child.name === "rebar" || child.name === "stirrup") {
+          child.visible = true;
+        }
+      } else if (child instanceof THREE.LineSegments) {
+        child.visible = viewMode !== "rebar";
+      }
+    });
+  }, [viewMode, selected, xrayProgress, beamGeo]);
+
+  return <primitive object={beamGeo} />;
+};
 
 // ── Animated Cursor ─────────────────────────────────────────────────
-const Cursor: React.FC<{ x: number; y: number; opacity: number }> = ({ x, y, opacity }) => (
+const Cursor: React.FC<{ x: number; y: number; opacity: number; clicking?: boolean }> = ({
+  x,
+  y,
+  opacity,
+  clicking,
+}) => (
   <svg
-    width="32"
-    height="40"
+    width={clicking ? "28" : "32"}
+    height={clicking ? "36" : "40"}
     viewBox="0 0 24 32"
     style={{
       position: "absolute",
@@ -31,1087 +276,1068 @@ const Cursor: React.FC<{ x: number; y: number; opacity: number }> = ({ x, y, opa
       top: y,
       opacity,
       pointerEvents: "none",
-      zIndex: 100,
-      filter: "drop-shadow(2px 3px 4px rgba(0,0,0,0.5))",
+      zIndex: 9999,
+      filter: "drop-shadow(2px 3px 6px rgba(0,0,0,0.6))",
+      transition: "width 0.05s, height 0.05s",
     }}
   >
-    <path d="M2 2 L2 26 L9 20 L15 30 L19 28 L13 18 L22 16 Z" fill="white" stroke="#111" strokeWidth="1.5" />
+    <path
+      d="M2 2 L2 26 L9 20 L15 30 L19 28 L13 18 L22 16 Z"
+      fill="white"
+      stroke="#111"
+      strokeWidth="1.5"
+    />
   </svg>
 );
 
-// ── Wall Panel SVG ──────────────────────────────────────────────────
-const WallPanelSVG: React.FC<{
-  frame: number;
-  showRebar: boolean;
-  rebarCount: number;
-  rebarStartFrame: number;
-  showChamfer: boolean;
-  chamferProgress: number;
-  spacingLabel: string;
-  showBom: boolean;
-  bomWeight: number;
-  windowY: number;
-  panelId: string;
-}> = ({
+// ── SVG Shop Drawing ────────────────────────────────────────────────
+const ShopDrawingSVG: React.FC<{ spacing: number; frame: number; animStart: number }> = ({
+  spacing,
   frame,
-  showRebar,
-  rebarCount,
-  rebarStartFrame,
-  showChamfer,
-  chamferProgress,
-  spacingLabel,
-  showBom,
-  bomWeight,
-  windowY,
-  panelId,
+  animStart,
 }) => {
-  const panelLeft = 200;
-  const panelRight = 800;
-  const panelTop = 60;
-  const panelBottom = 720;
-  const panelW = panelRight - panelLeft;
+  // Elevation view bounds
+  const eL = 100;
+  const eR = 1050;
+  const eT = 120;
+  const eB = 520;
+  const eW = eR - eL;
+  const eH = eB - eT;
 
-  // Rebar x positions
-  const rebarXs: number[] = [];
-  const rebarSpacing = panelW / (rebarCount + 1);
-  for (let i = 1; i <= rebarCount; i++) {
-    rebarXs.push(panelLeft + i * rebarSpacing);
+  // Stirrup tick marks based on spacing
+  const stirrupXs: number[] = [];
+  const closeZonePx = (S_CLOSE_ZONE / L) * eW;
+  // Close zone start
+  for (let px = 0; px <= closeZonePx; px += (S_CLOSE_SPACING / L) * eW) {
+    stirrupXs.push(eL + px);
+  }
+  // Mid zone
+  const midStartPx = closeZonePx + (spacing / L) * eW;
+  const midEndPx = eW - closeZonePx;
+  for (let px = midStartPx; px <= midEndPx; px += (spacing / L) * eW) {
+    stirrupXs.push(eL + px);
+  }
+  // Close zone end
+  for (let px = eW - closeZonePx; px <= eW; px += (S_CLOSE_SPACING / L) * eW) {
+    stirrupXs.push(eL + px);
   }
 
-  const chamferSize = 20;
-  const panelPath = showChamfer
-    ? `M ${panelLeft + chamferSize} ${panelTop}
-       L ${panelRight - chamferSize} ${panelTop}
-       L ${panelRight} ${panelTop + chamferSize}
-       L ${panelRight} ${panelBottom}
-       L ${panelLeft} ${panelBottom}
-       L ${panelLeft} ${panelTop + chamferSize}
-       Z`
-    : "";
+  // Cross-section bounds
+  const csL = 1120;
+  const csT = 160;
+  const csW = 200;
+  const csH = 400;
+
+  const drawProgress = interpolate(frame, [animStart, animStart + 60], [0, 1], clamp);
 
   return (
-    <svg viewBox="0 0 1200 800" style={{ width: "100%", height: "100%" }}>
-      {/* Panel outline */}
-      {showChamfer ? (
-        <path
-          d={panelPath}
-          fill="none"
-          stroke={theme.textPrimary}
-          strokeWidth={2}
-          opacity={chamferProgress}
-        />
-      ) : null}
-      <rect
-        x={panelLeft}
-        y={panelTop}
-        width={panelW}
-        height={panelBottom - panelTop}
-        fill="none"
-        stroke={theme.textPrimary}
-        strokeWidth={2}
-        opacity={showChamfer ? 1 - chamferProgress : 1}
-      />
-
-      {/* Window opening (dashed) */}
-      <rect
-        x={350}
-        y={windowY}
-        width={300}
-        height={200}
-        fill="none"
-        stroke={theme.textSecondary}
-        strokeWidth={1.5}
-        strokeDasharray="10,5"
-      />
-
-      {/* Dimension lines */}
-      {/* Horizontal bottom */}
-      <line x1={panelLeft} y1={760} x2={panelRight} y2={760} stroke={theme.textSecondary} strokeWidth={1} />
-      <line x1={panelLeft} y1={750} x2={panelLeft} y2={770} stroke={theme.textSecondary} strokeWidth={1} />
-      <line x1={panelRight} y1={750} x2={panelRight} y2={770} stroke={theme.textSecondary} strokeWidth={1} />
-      <text x={(panelLeft + panelRight) / 2} y={785} textAnchor="middle" fill={theme.textSecondary} fontSize={18} fontFamily={theme.fontMono}>
-        2400
-      </text>
-
-      {/* Vertical right */}
-      <line x1={850} y1={panelTop} x2={850} y2={panelBottom} stroke={theme.textSecondary} strokeWidth={1} />
-      <line x1={840} y1={panelTop} x2={860} y2={panelTop} stroke={theme.textSecondary} strokeWidth={1} />
-      <line x1={840} y1={panelBottom} x2={860} y2={panelBottom} stroke={theme.textSecondary} strokeWidth={1} />
-      <text x={870} y={(panelTop + panelBottom) / 2} textAnchor="start" fill={theme.textSecondary} fontSize={18} fontFamily={theme.fontMono} transform={`rotate(90, 870, ${(panelTop + panelBottom) / 2})`}>
-        3000
-      </text>
-
-      {/* Rebar lines */}
-      {showRebar &&
-        rebarXs.map((x, i) => {
-          const lineOpacity = interpolate(
-            frame,
-            [rebarStartFrame + i * 8, rebarStartFrame + i * 8 + 8],
-            [0, 1],
-            clamp,
-          );
-          return (
-            <line
-              key={`rebar-${i}`}
-              x1={x}
-              y1={panelTop + 15}
-              x2={x}
-              y2={panelBottom - 15}
-              stroke="#FF4444"
-              strokeWidth={1.5}
-              opacity={lineOpacity}
-            />
-          );
-        })}
-
-      {/* Rebar annotation */}
-      {showRebar && frame > rebarStartFrame + rebarCount * 8 + 20 && (
-        <text x={panelRight + 30} y={400} fill={theme.textSecondary} fontSize={16} fontFamily={theme.fontMono}>
-          {spacingLabel}
-        </text>
-      )}
-
-      {/* Chamfer detail callout */}
-      {showChamfer && chamferProgress > 0 && (
-        <g opacity={chamferProgress}>
-          {/* Callout circle */}
-          <circle cx={1020} cy={140} r={70} fill="none" stroke={theme.textSecondary} strokeWidth={1} />
-          {/* Leader line */}
-          <line x1={panelRight} y1={panelTop} x2={960} y2={140} stroke={theme.textSecondary} strokeWidth={1} strokeDasharray="4,3" />
-          {/* Corner profile inside callout */}
-          <line x1={990} y1={100} x2={990} y2={140} stroke={theme.textPrimary} strokeWidth={2} />
-          <line x1={990} y1={140} x2={1050} y2={140} stroke={theme.textPrimary} strokeWidth={2} />
-          {/* Chamfer diagonal */}
-          <line
-            x1={990}
-            y1={100}
-            x2={1050}
-            y2={140}
-            stroke={theme.accent}
-            strokeWidth={2}
-            strokeDasharray={`${60 * chamferProgress} 60`}
-          />
-          <text x={1020} y={235} textAnchor="middle" fill={theme.textSecondary} fontSize={14} fontFamily={theme.fontMono}>
-            Chamfer 20x20
-          </text>
-        </g>
-      )}
-
-      {/* BOM table */}
-      {showBom && (
-        <g>
-          <text x={900} y={620} fill={theme.textTertiary} fontSize={14} fontFamily={theme.fontMono} fontWeight={600} letterSpacing={2}>
-            REBAR SCHEDULE
-          </text>
-          <line x1={900} y1={630} x2={1160} y2={630} stroke={theme.borderDefault} strokeWidth={1} />
-          <text x={900} y={655} fill={theme.textSecondary} fontSize={14} fontFamily={theme.fontMono}>
-            {`Ø12 — 32 pcs — L=3450mm — ${Math.round(bomWeight)} kg`}
-          </text>
-        </g>
-      )}
+    <svg
+      viewBox="0 0 1400 700"
+      style={{
+        width: "100%",
+        height: "100%",
+        opacity: drawProgress,
+      }}
+    >
+      {/* Arrow marker */}
+      <defs>
+        <marker id="arrowL" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto">
+          <path d="M8,0 L0,3 L8,6" fill="none" stroke="#8B8D9A" strokeWidth="1" />
+        </marker>
+        <marker id="arrowR" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L8,3 L0,6" fill="none" stroke="#8B8D9A" strokeWidth="1" />
+        </marker>
+      </defs>
 
       {/* Title block */}
-      <line x1={0} y1={770} x2={1200} y2={770} stroke={theme.borderDefault} strokeWidth={1} />
-      <text x={40} y={792} fill={theme.textPrimary} fontSize={22} fontFamily={theme.fontMono} fontWeight={600}>
-        {panelId}
+      <text x="100" y="50" fill="#E8E9ED" fontSize="24" fontFamily="DM Sans" fontWeight="700">
+        BEAM B-01
       </text>
-      <text x={200} y={792} fill={theme.textTertiary} fontSize={16} fontFamily={theme.fontMono}>
-        Scale 1:25
+      <text x="100" y="78" fill="#8B8D9A" fontSize="16" fontFamily="DM Sans">
+        Elevation + Cross-Section &mdash; Scale 1:25
       </text>
+
+      {/* Concrete outline (elevation) */}
+      <rect
+        x={eL}
+        y={eT}
+        width={eW}
+        height={eH}
+        fill="none"
+        stroke="#8B8D9A"
+        strokeWidth="2"
+      />
+
+      {/* Bottom rebar lines */}
+      {[0.3, 0.5, 0.7].map((frac, i) => (
+        <line
+          key={`bot-${i}`}
+          x1={eL + 20}
+          x2={eR - 20}
+          y1={eB - 40}
+          y2={eB - 40}
+          stroke="#c0392b"
+          strokeWidth="3"
+          transform={`translate(0, ${-i * 18})`}
+        />
+      ))}
+
+      {/* Top rebar lines */}
+      {[0.35, 0.65].map((frac, i) => (
+        <line
+          key={`top-${i}`}
+          x1={eL + 20}
+          x2={eR - 20}
+          y1={eT + 40 + i * 16}
+          y2={eT + 40 + i * 16}
+          stroke="#c0392b"
+          strokeWidth="2.5"
+        />
+      ))}
+
+      {/* Stirrup tick marks */}
+      {stirrupXs.map((sx, i) => (
+        <line
+          key={`st-${i}`}
+          x1={sx}
+          x2={sx}
+          y1={eT + 8}
+          y2={eB - 8}
+          stroke="#27ae60"
+          strokeWidth="1.2"
+          opacity={0.7}
+        />
+      ))}
+
+      {/* Dimension: Length */}
+      <line
+        x1={eL}
+        x2={eR}
+        y1={eB + 50}
+        y2={eB + 50}
+        stroke="#8B8D9A"
+        strokeWidth="1"
+        markerStart="url(#arrowL)"
+        markerEnd="url(#arrowR)"
+      />
+      <text
+        x={(eL + eR) / 2}
+        y={eB + 45}
+        fill="#E8E9ED"
+        fontSize="16"
+        fontFamily="JetBrains Mono"
+        textAnchor="middle"
+      >
+        6000
+      </text>
+
+      {/* Dimension: Depth */}
+      <line
+        x1={eL - 40}
+        x2={eL - 40}
+        y1={eT}
+        y2={eB}
+        stroke="#8B8D9A"
+        strokeWidth="1"
+        markerStart="url(#arrowL)"
+        markerEnd="url(#arrowR)"
+      />
+      <text
+        x={eL - 50}
+        y={(eT + eB) / 2}
+        fill="#E8E9ED"
+        fontSize="14"
+        fontFamily="JetBrains Mono"
+        textAnchor="middle"
+        transform={`rotate(-90, ${eL - 50}, ${(eT + eB) / 2})`}
+      >
+        600
+      </text>
+
+      {/* Spacing annotations */}
+      <text x={eL + 10} y={eB + 80} fill="#27ae60" fontSize="13" fontFamily="JetBrains Mono">
+        {`Ø10 c/c ${S_CLOSE_SPACING}`}
+      </text>
+      <text x={(eL + eR) / 2 - 40} y={eB + 80} fill="#27ae60" fontSize="13" fontFamily="JetBrains Mono">
+        {`Ø10 c/c ${spacing}`}
+      </text>
+      <text x={eR - 130} y={eB + 80} fill="#27ae60" fontSize="13" fontFamily="JetBrains Mono">
+        {`Ø10 c/c ${S_CLOSE_SPACING}`}
+      </text>
+
+      {/* Rebar annotations */}
+      <text x={eR + 10} y={eT + 50} fill="#c0392b" fontSize="13" fontFamily="JetBrains Mono">
+        2{"Ø"}16 (top)
+      </text>
+      <text x={eR + 10} y={eB - 50} fill="#c0392b" fontSize="13" fontFamily="JetBrains Mono">
+        3{"Ø"}20 (bot)
+      </text>
+
+      {/* Cross-section box */}
+      <rect
+        x={csL}
+        y={csT}
+        width={csW}
+        height={csH}
+        fill="none"
+        stroke="#8B8D9A"
+        strokeWidth="2"
+      />
+      <text
+        x={csL + csW / 2}
+        y={csT - 14}
+        fill="#E8E9ED"
+        fontSize="15"
+        fontFamily="DM Sans"
+        textAnchor="middle"
+        fontWeight="600"
+      >
+        Section A-A
+      </text>
+
+      {/* Dimension: Width under cross-section */}
+      <line
+        x1={csL}
+        x2={csL + csW}
+        y1={csT + csH + 30}
+        y2={csT + csH + 30}
+        stroke="#8B8D9A"
+        strokeWidth="1"
+        markerStart="url(#arrowL)"
+        markerEnd="url(#arrowR)"
+      />
+      <text
+        x={csL + csW / 2}
+        y={csT + csH + 25}
+        fill="#E8E9ED"
+        fontSize="14"
+        fontFamily="JetBrains Mono"
+        textAnchor="middle"
+      >
+        300
+      </text>
+
+      {/* Cross-section top rebar circles (2) */}
+      {[0.35, 0.65].map((frac, i) => (
+        <circle
+          key={`cs-top-${i}`}
+          cx={csL + csW * frac}
+          cy={csT + 35}
+          r={8}
+          fill="#c0392b"
+        />
+      ))}
+
+      {/* Cross-section bottom rebar circles (3) */}
+      {[0.25, 0.5, 0.75].map((frac, i) => (
+        <circle
+          key={`cs-bot-${i}`}
+          cx={csL + csW * frac}
+          cy={csT + csH - 35}
+          r={10}
+          fill="#c0392b"
+        />
+      ))}
+
+      {/* Stirrup outline in cross-section */}
+      <rect
+        x={csL + 20}
+        y={csT + 15}
+        width={csW - 40}
+        height={csH - 30}
+        fill="none"
+        stroke="#27ae60"
+        strokeWidth="2"
+        rx="3"
+      />
     </svg>
   );
 };
 
-// ── Isometric Building ──────────────────────────────────────────────
-const IsometricBuilding: React.FC<{
-  frame: number;
-  highlightPanel: boolean;
-  scale?: number;
-}> = ({ frame, highlightPanel, scale = 1 }) => {
-  const floors = 5;
-  const floorH = 60;
-  const floorW = 400;
-  const gap = 2;
+// ── Properties Panel Row ────────────────────────────────────────────
+const PropRow: React.FC<{
+  label: string;
+  value: string;
+  highlighted?: boolean;
+  mono?: boolean;
+}> = ({ label, value, highlighted, mono }) => (
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      padding: "6px 0",
+      borderBottom: `1px solid ${theme.borderFaint}`,
+    }}
+  >
+    <span
+      style={{
+        color: theme.textSecondary,
+        fontSize: 22,
+        fontFamily: theme.fontUi,
+      }}
+    >
+      {label}
+    </span>
+    <span
+      style={{
+        color: highlighted ? theme.accent : theme.textPrimary,
+        fontSize: 22,
+        fontFamily: mono ? theme.fontMono : theme.fontUi,
+        fontWeight: 600,
+        background: highlighted ? theme.accentGlow : "transparent",
+        padding: highlighted ? "2px 10px" : 0,
+        borderRadius: 4,
+        border: highlighted ? `1px solid ${theme.accent}` : "none",
+      }}
+    >
+      {value}
+    </span>
+  </div>
+);
 
-  const panelHighlightOpacity = highlightPanel
-    ? interpolate(frame, [60, 80], [0, 1], clamp)
-    : 0;
+// ── Properties Section ──────────────────────────────────────────────
+const PropSection: React.FC<{
+  title: string;
+  children: React.ReactNode;
+  startFrame: number;
+  frame: number;
+}> = ({ title, children, startFrame, frame }) => {
+  const opacity = interpolate(frame, [startFrame, startFrame + 12], [0, 1], clamp);
+  const slideY = interpolate(frame, [startFrame, startFrame + 12], [16, 0], clamp);
+  return (
+    <div style={{ opacity, transform: `translateY(${slideY}px)`, marginBottom: 16 }}>
+      <div
+        style={{
+          fontSize: 18,
+          fontFamily: theme.fontUi,
+          fontWeight: 700,
+          color: theme.textTertiary,
+          textTransform: "uppercase",
+          letterSpacing: 2,
+          marginBottom: 8,
+        }}
+      >
+        {title}
+      </div>
+      {children}
+    </div>
+  );
+};
+
+// ── Stat Counter ────────────────────────────────────────────────────
+const StatCounter: React.FC<{
+  value: number;
+  label: string;
+  color: string;
+  startFrame: number;
+  frame: number;
+  fontSize?: number;
+}> = ({ value, label, color, startFrame, frame, fontSize = 80 }) => {
+  const progress = interpolate(frame, [startFrame, startFrame + 40], [0, 1], clamp);
+  const displayVal = Math.round(progress * value);
+  const opacity = interpolate(frame, [startFrame, startFrame + 15], [0, 1], clamp);
+  const slideY = interpolate(frame, [startFrame, startFrame + 15], [30, 0], clamp);
 
   return (
     <div
       style={{
-        perspective: 1200,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        width: "100%",
-        height: "100%",
-        transform: `scale(${scale})`,
+        opacity,
+        transform: `translateY(${slideY}px)`,
+        textAlign: "center",
+        marginBottom: 48,
       }}
     >
       <div
         style={{
-          transform: "rotateX(-25deg) rotateY(45deg)",
-          transformStyle: "preserve-3d",
-          position: "relative",
+          fontSize,
+          fontWeight: 800,
+          fontFamily: theme.fontMono,
+          color,
+          lineHeight: 1,
         }}
       >
-        {Array.from({ length: floors }).map((_, i) => {
-          const isTarget = i === 2; // 3rd floor (0-indexed)
-          return (
-            <div key={i} style={{ position: "relative", marginBottom: gap }}>
-              {/* Floor slab */}
-              <div
-                style={{
-                  width: floorW,
-                  height: 4,
-                  background: theme.borderDefault,
-                  marginBottom: 1,
-                }}
-              />
-              {/* Floor body */}
-              <div
-                style={{
-                  width: floorW,
-                  height: floorH,
-                  background: theme.bgElevated,
-                  border: `1px solid ${theme.borderSubtle}`,
-                  display: "flex",
-                  position: "relative",
-                }}
-              >
-                {/* Panel segments */}
-                {Array.from({ length: 8 }).map((_, j) => {
-                  const isW14 = isTarget && j === 4;
-                  return (
-                    <div
-                      key={j}
-                      style={{
-                        flex: 1,
-                        borderRight: j < 7 ? `1px solid ${theme.borderFaint}` : "none",
-                        background: isW14
-                          ? `rgba(79, 143, 247, ${0.15 * panelHighlightOpacity})`
-                          : "transparent",
-                        border: isW14 && panelHighlightOpacity > 0.5
-                          ? `2px solid ${theme.accent}`
-                          : undefined,
-                        position: "relative",
-                      }}
-                    >
-                      {isW14 && panelHighlightOpacity > 0 && (
-                        <div
-                          style={{
-                            position: "absolute",
-                            top: -30,
-                            left: "50%",
-                            transform: "translateX(-50%)",
-                            color: theme.accent,
-                            fontSize: 28,
-                            fontWeight: 600,
-                            fontFamily: theme.fontMono,
-                            opacity: interpolate(frame, [70, 90], [0, 1], clamp),
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          W-14
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
+        {displayVal}
+      </div>
+      <div
+        style={{
+          fontSize: 32,
+          fontFamily: theme.fontUi,
+          color: theme.textSecondary,
+          marginTop: 8,
+        }}
+      >
+        {label}
       </div>
     </div>
   );
 };
 
+// ════════════════════════════════════════════════════════════════════
 // ── Main Scene ──────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════
 export const EngineerTheProject: React.FC = () => {
   const frame = useCurrentFrame();
 
-  // ── Global opacity transitions ────────────────────────────────────
-  const uiOpacity = interpolate(frame, [P1_START, P1_START + 20], [0, 1], clamp);
-  const endFadeOut = interpolate(frame, [1628, TOTAL_FRAMES], [1, 0], clamp);
-  const statsTransition = interpolate(frame, [P8_START, P8_START + 40], [0, 1], clamp);
+  // ── Derived animation state ─────────────────────────────────────
+  const uiOpacity = interpolate(frame, [0, 30], [0, 1], clamp);
+  const uiFadeOut = interpolate(frame, [1200, 1280], [1, 0], clamp);
+  const editorVisible = uiOpacity * uiFadeOut;
 
-  // ── Phase 2: split widths ─────────────────────────────────────────
-  const leftPct = interpolate(frame, [P2_START, P2_START + 70], [100, 35], clamp);
-  const buildingScale = interpolate(frame, [P2_START, P2_START + 70], [1.0, 0.55], clamp);
-  const rightRevealPct = interpolate(frame, [P2_START + 30, P2_START + 110], [0, 100], clamp);
+  // View mode
+  const viewMode: "normal" | "xray" | "rebar" =
+    frame >= 350
+      ? "normal"
+      : frame >= 290
+        ? "rebar"
+        : frame >= 140
+          ? "xray"
+          : "normal";
 
-  // ── Phase 3: chat bar ─────────────────────────────────────────────
-  const chatBarH = interpolate(frame, [P3_START, P3_START + 20], [0, 300], clamp);
-  const userMsg = "Add Ø12 vertical rebar at 200mm spacing, 30mm cover, both faces.";
-  const typingStart = P3_START + 10;
-  const thinkingText =
-    frame < P3_START + 140
-      ? "\u2699 Generating reinforcement layout..."
-      : "\u2713 Reinforcement added";
+  const xrayProgress = interpolate(frame, [140, 180], [0, 1], clamp);
+  const isSelected = frame >= 420 && frame < 1130;
 
-  // ── Phase 4: toolbar ──────────────────────────────────────────────
-  const toolbarOpacity = interpolate(frame, [P4_START, P4_START + 20], [0, 1], clamp);
+  // Beam appear
+  const beamOpacity = interpolate(frame, [30, 60], [0, 1], clamp);
 
-  // Cursor for Edge Profile
-  const edgeBtnX = 1580;
-  const edgeBtnY = 170;
-  const p4CursorX = interpolate(frame, [700, 720], [2400, edgeBtnX], clamp);
-  const p4CursorY = interpolate(frame, [700, 720], [600, edgeBtnY], clamp);
-  const edgeBtnActive = frame >= 720 && frame < 770;
-  const dropdownOpacity = interpolate(frame, [725, 735], [0, 1], clamp) * (frame < 770 ? 1 : interpolate(frame, [770, 775], [1, 0], clamp));
-  const hoverIdx = frame >= 750 ? 2 : -1;
-
-  // Chamfer
-  const chamferProgress = interpolate(frame, [780, 860], [0, 1], clamp);
-
-  // ── Phase 5: property panel ───────────────────────────────────────
-  const buildingFadeOut = interpolate(frame, [P5_START, P5_START + 30], [1, 0], clamp);
-  const propPanelIn = interpolate(frame, [P5_START + 20, P5_START + 50], [0, 1], clamp);
-
-  const spacingHighlight = frame >= 960 && frame < 1020;
-  const spacingOldOpacity = frame < 970 ? 1 : interpolate(frame, [970, 990], [1, 0], clamp);
-  const spacingNewOpacity = frame < 970 ? 0 : interpolate(frame, [970, 990], [0, 1], clamp);
-
-  const rebarCount = frame < P5_START + 120 ? 12 : 16;
-  const spacingLabel = frame < P5_START + 120 ? "Ø12 c/c 200" : "Ø12 c/c 150";
-
-  const bomOpacity = interpolate(frame, [1060, 1080], [0, 1], clamp);
-  const bomWeight = interpolate(frame, [1060, 1100], [82, 108], clamp);
-
-  // ── Phase 6: window drag ──────────────────────────────────────────
-  const windowBaseY = 350;
-  const windowDragY = interpolate(frame, [1160, 1200], [windowBaseY, windowBaseY - 30], clamp);
-  const toastOpacity = interpolate(frame, [1200, 1215], [0, 1], clamp);
-  const toastTranslateY = interpolate(frame, [1200, 1215], [60, 0], clamp);
-
-  // ── Phase 7: montage panel IDs ────────────────────────────────────
-  const montageW15Opacity = frame >= P7_START && frame < P7_START + 60
-    ? interpolate(frame, [P7_START, P7_START + 10], [0, 1], clamp)
-    : frame >= P7_START + 10 ? interpolate(frame, [P7_START + 50, P7_START + 60], [1, 0], clamp) : 0;
-  const montageW16Opacity = frame >= P7_START + 60 && frame < P7_START + 120
-    ? interpolate(frame, [P7_START + 60, P7_START + 70], [0, 1], clamp)
-    : frame >= P7_START + 70 ? interpolate(frame, [P7_START + 110, P7_START + 120], [1, 0], clamp) : 0;
-  const montageW17Opacity = frame >= P7_START + 120
-    ? interpolate(frame, [P7_START + 120, P7_START + 130], [0, 1], clamp)
+  // Modal
+  const modalVisible = frame >= 450 && frame < 1130;
+  const modalOpacity = modalVisible
+    ? frame < 480
+      ? interpolate(frame, [450, 480], [0, 1], clamp)
+      : frame >= 1100
+        ? interpolate(frame, [1100, 1130], [1, 0], clamp)
+        : 1
     : 0;
 
-  const checkScale = interpolate(frame, [P7_START + 140, P7_START + 155, P7_START + 165], [0, 1.2, 1.0], clamp);
+  // Spacing edit
+  const spacingValue = frame >= 940 ? 150 : 200;
 
-  // ── Determine active phase context ────────────────────────────────
-  const inStudioPhase = frame < P8_START;
-  const showLeftPanel = frame >= P2_START && frame < P8_START;
-  const showRightPanel = frame >= P2_START && frame < P8_START;
-  const showChat = frame >= P3_START && frame < P7_START;
-  const showToolbar = frame >= P4_START && frame < P7_START;
-  const showBuildingView = frame < P5_START + 30;
-  const showPropertyPanel = frame >= P5_START + 20 && frame < P7_START;
+  // Toast
+  const toastOpacity =
+    frame >= 1020 && frame < 1100
+      ? interpolate(frame, [1020, 1035], [0, 1], clamp) *
+        interpolate(frame, [1080, 1100], [1, 0], clamp)
+      : 0;
 
-  // Which panel to show in montage
-  const montagePanelId = frame >= P7_START + 120 ? "W-17" : frame >= P7_START + 60 ? "W-16" : frame >= P7_START ? "W-15" : "W-14";
-  void (frame >= P7_START ? montagePanelId : "W-14");
+  // Stats phase
+  const showStats = frame >= 1280;
+  const statsOpacity = interpolate(frame, [1280, 1310], [0, 1], clamp) *
+    interpolate(frame, [1540, 1560], [1, 0], clamp);
 
-  // ── Phase 2: AI Generated badge ───────────────────────────────────
-  const badgeOpacity = interpolate(frame, [250, 270], [0, 1], clamp);
+  // End card
+  const showEndCard = frame >= 1550;
+  const endCardOpacity = interpolate(frame, [1550, 1580], [0, 1], clamp) *
+    interpolate(frame, [1630, 1650], [1, 0], clamp);
 
-  // ── Phase 1 cursor ────────────────────────────────────────────────
-  const p1CursorOpacity = interpolate(frame, [40, 50, 85, 95], [0, 1, 1, 0], clamp);
-  const p1CursorX = interpolate(frame, [40, 70], [1200, 720], clamp);
-  const p1CursorY = interpolate(frame, [40, 70], [500, 380], clamp);
+  // ── Cursor position ─────────────────────────────────────────────
+  // Toolbar button positions (approximate)
+  const xrayBtnX = 2060;
+  const xrayBtnY = 44;
+  const rebarBtnX = 2280;
+  const normalBtnX = 1840;
+  const closeBtnX = 3540;
+  const closeBtnY = 110;
+  const spacingFieldX = 3260;
+  const spacingFieldY = 1160;
 
-  // Viewport cursor visibility
-  const p4CursorOpacity = interpolate(frame, [700, 710, 760, 770], [0, 1, 1, 0], clamp);
+  let cursorX = 800;
+  let cursorY = 600;
+  let cursorOpacity = 0;
+  let clicking = false;
 
-  // Phase 6 cursor
-  const p6CursorOpacity = interpolate(frame, [1150, 1160, 1195, 1205], [0, 1, 1, 0], clamp);
-  const p6CursorX = interpolate(frame, [1160, 1200], [1100, 1100], clamp);
-  const p6CursorY = interpolate(frame, [1160, 1200], [600, 540], clamp);
+  if (frame >= 120 && frame < 140) {
+    // Move to X-Ray button
+    cursorX = interpolate(frame, [120, 135], [800, xrayBtnX], clamp);
+    cursorY = interpolate(frame, [120, 135], [600, xrayBtnY], clamp);
+    cursorOpacity = interpolate(frame, [120, 125], [0, 1], clamp);
+  } else if (frame >= 140 && frame < 280) {
+    cursorX = xrayBtnX;
+    cursorY = xrayBtnY;
+    cursorOpacity = frame < 150 ? 1 : interpolate(frame, [150, 170], [1, 0], clamp);
+    clicking = frame >= 140 && frame < 145;
+  } else if (frame >= 280 && frame < 300) {
+    // Move to Rebar button
+    cursorX = interpolate(frame, [280, 288], [xrayBtnX, rebarBtnX], clamp);
+    cursorY = xrayBtnY;
+    cursorOpacity = interpolate(frame, [280, 283], [0, 1], clamp);
+    clicking = frame >= 289 && frame < 293;
+  } else if (frame >= 300 && frame < 350) {
+    cursorOpacity = interpolate(frame, [300, 310], [1, 0], clamp);
+    cursorX = rebarBtnX;
+    cursorY = xrayBtnY;
+  } else if (frame >= 350 && frame < 420) {
+    // Move to Normal button
+    cursorX = interpolate(frame, [350, 358], [rebarBtnX, normalBtnX], clamp);
+    cursorY = xrayBtnY;
+    cursorOpacity = interpolate(frame, [350, 353], [0, 1], clamp) *
+      interpolate(frame, [360, 380], [1, 0], clamp);
+    clicking = frame >= 350 && frame < 354;
+  } else if (frame >= 420 && frame < 450) {
+    // Double-click on beam
+    cursorX = interpolate(frame, [420, 428], [normalBtnX, 1400], clamp);
+    cursorY = interpolate(frame, [420, 428], [xrayBtnY, 900], clamp);
+    cursorOpacity = 1;
+    clicking = (frame >= 430 && frame < 433) || (frame >= 436 && frame < 439);
+  } else if (frame >= 450 && frame < 460) {
+    cursorOpacity = interpolate(frame, [450, 460], [1, 0], clamp);
+    cursorX = 1400;
+    cursorY = 900;
+  } else if (frame >= 890 && frame < 960) {
+    // Move to spacing field
+    cursorX = interpolate(frame, [890, 905], [1400, spacingFieldX], clamp);
+    cursorY = interpolate(frame, [890, 905], [900, spacingFieldY], clamp);
+    cursorOpacity = interpolate(frame, [890, 895], [0, 1], clamp) *
+      interpolate(frame, [945, 960], [1, 0], clamp);
+    clicking = frame >= 920 && frame < 924;
+  } else if (frame >= 1090 && frame < 1140) {
+    // Move to close button
+    cursorX = interpolate(frame, [1090, 1098], [spacingFieldX, closeBtnX], clamp);
+    cursorY = interpolate(frame, [1090, 1098], [spacingFieldY, closeBtnY], clamp);
+    cursorOpacity = interpolate(frame, [1090, 1093], [0, 1], clamp) *
+      interpolate(frame, [1110, 1130], [1, 0], clamp);
+    clicking = frame >= 1100 && frame < 1104;
+  }
 
-  // Phase 8 sub-animations
-  const comparisonFade = interpolate(frame, [1550, 1565], [0, 1], clamp);
-  const endCardFade = interpolate(frame, [1580, 1595], [0, 1], clamp);
+  // ── Active view mode button ─────────────────────────────────────
+  const activeBtn = viewMode;
 
-  // Progress bar
-  const barPct = interpolate(
-    frame,
-    [1590, 1600, 1601, 1610, 1611, 1620],
-    [0, 65, 65, 80, 80, 95],
-    clamp,
+  // ── Sidebar element list ────────────────────────────────────────
+  const sidebarOpacity = interpolate(frame, [30, 50], [0, 1], clamp);
+
+  // ── Toolbar buttons ─────────────────────────────────────────────
+  const ToolbarButton: React.FC<{
+    label: string;
+    active?: boolean;
+    accent?: boolean;
+    style?: React.CSSProperties;
+  }> = ({ label, active, accent, style: btnStyle }) => (
+    <div
+      style={{
+        padding: "8px 20px",
+        borderRadius: 6,
+        fontSize: 24,
+        fontFamily: theme.fontUi,
+        fontWeight: 600,
+        color: active ? "#fff" : theme.textSecondary,
+        background: active
+          ? accent
+            ? "#818cf8"
+            : theme.accent
+          : "transparent",
+        cursor: "pointer",
+        whiteSpace: "nowrap",
+        ...btnStyle,
+      }}
+    >
+      {label}
+    </div>
   );
-  const barColor = barPct <= 65 ? theme.accent : barPct <= 80 ? theme.green : "#5EEAA0";
 
-  // All panels fade out for Phase 8
-  const studioFadeOut = interpolate(frame, [P8_START, P8_START + 40], [1, 0], clamp);
+  // ── Canvas dimensions ───────────────────────────────────────────
+  const canvasWidth = 3280;
+  const canvasHeight = 2072;
+
+  // ── Properties panel data ───────────────────────────────────────
+  const spacingHighlighted = frame >= 920 && frame < 1020;
 
   return (
     <div
       style={{
         width: 3840,
         height: 2160,
-        background: frame >= P8_START ? theme.bgVoid : theme.bgApp,
-        fontFamily: theme.fontUi,
-        overflow: "hidden",
+        background: theme.bgVoid,
         position: "relative",
-        opacity: uiOpacity * endFadeOut,
+        overflow: "hidden",
+        fontFamily: theme.fontUi,
       }}
     >
-      {/* ═══ Studio UI ═══ */}
-      {inStudioPhase && (
-        <div style={{ width: "100%", height: "100%", opacity: studioFadeOut }}>
-          {/* ── Top bar ── */}
-          <div
+      {/* ── Editor UI ──────────────────────────────────────────── */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          opacity: editorVisible,
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        {/* Toolbar */}
+        <div
+          style={{
+            height: 88,
+            background: theme.bgSurface,
+            borderBottom: `1px solid ${theme.borderDefault}`,
+            display: "flex",
+            alignItems: "center",
+            padding: "0 28px",
+            gap: 20,
+            zIndex: 10,
+          }}
+        >
+          {/* Logo + title */}
+          <Img
+            src={staticFile("assets/logo.png")}
+            style={{ width: 44, height: 44 }}
+          />
+          <span
             style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 88,
-              background: theme.bgSidebar,
-              borderBottom: `2px solid ${theme.borderDefault}`,
-              display: "flex",
-              alignItems: "center",
-              padding: "0 32px",
-              zIndex: 10,
+              fontSize: 28,
+              fontWeight: 700,
+              color: theme.textPrimary,
+              marginRight: 16,
             }}
           >
-            <Img
-              src={staticFile("assets/logo.png")}
-              style={{ width: 56, height: 56, marginRight: 20 }}
-            />
-            <span style={{ color: theme.textPrimary, fontWeight: 600, fontSize: 28, marginRight: 24 }}>
-              Buildable
-            </span>
-            <span style={{ color: theme.borderStrong, margin: "0 16px" }}>|</span>
-            <span style={{ color: theme.textSecondary, fontSize: 26 }}>Design Studio</span>
+            Buildable
+          </span>
+          <div
+            style={{
+              width: 1,
+              height: 40,
+              background: theme.borderDefault,
+              margin: "0 8px",
+            }}
+          />
+          <span
+            style={{
+              fontSize: 26,
+              color: theme.textSecondary,
+              fontWeight: 500,
+              marginRight: 40,
+            }}
+          >
+            Building Editor
+          </span>
+
+          {/* Add Beam button */}
+          <div
+            style={{
+              padding: "8px 22px",
+              borderRadius: 6,
+              fontSize: 23,
+              fontFamily: theme.fontUi,
+              fontWeight: 600,
+              color: theme.accent,
+              border: `1px solid ${theme.accent}`,
+              marginRight: 30,
+            }}
+          >
+            + Add Beam
           </div>
 
-          {/* ── Main content area ── */}
-          <div style={{ display: "flex", marginTop: 88, height: "calc(100% - 88px)" }}>
-            {/* ── Left Panel ── */}
+          {/* Spacer */}
+          <div style={{ flex: 1 }} />
+
+          {/* View mode buttons */}
+          <div
+            style={{
+              display: "flex",
+              gap: 4,
+              background: theme.bgElevated,
+              borderRadius: 8,
+              padding: 4,
+              border: `1px solid ${theme.borderSubtle}`,
+            }}
+          >
+            <ToolbarButton label="Normal" active={activeBtn === "normal"} />
+            <ToolbarButton
+              label="X-Ray"
+              active={activeBtn === "xray"}
+              accent
+            />
+            <ToolbarButton
+              label="Rebar"
+              active={activeBtn === "rebar"}
+              accent
+            />
+          </div>
+
+          <div
+            style={{
+              width: 1,
+              height: 40,
+              background: theme.borderDefault,
+              margin: "0 16px",
+            }}
+          />
+
+          {/* Fit button */}
+          <div
+            style={{
+              padding: "8px 20px",
+              borderRadius: 6,
+              fontSize: 23,
+              fontFamily: theme.fontUi,
+              fontWeight: 500,
+              color: theme.textSecondary,
+              border: `1px solid ${theme.borderSubtle}`,
+            }}
+          >
+            Fit
+          </div>
+        </div>
+
+        {/* Main area: Viewport + Sidebar */}
+        <div style={{ display: "flex", flex: 1 }}>
+          {/* 3D Viewport */}
+          <div
+            style={{
+              flex: 1,
+              position: "relative",
+              background: theme.bgViewport,
+            }}
+          >
+            <div style={{ opacity: beamOpacity, width: "100%", height: "100%" }}>
+              <ThreeCanvas
+                width={canvasWidth}
+                height={canvasHeight}
+                camera={{ fov: 50, position: [1.5, 0.8, 1.5] }}
+              >
+                <color attach="background" args={["#1a1a22"]} />
+                <ambientLight intensity={0.6} />
+                <directionalLight position={[5, 8, 5]} intensity={0.8} />
+                <directionalLight
+                  position={[-3, 4, -3]}
+                  intensity={0.3}
+                />
+                <gridHelper args={[5, 40, 0x3a3a45, 0x2a2a30]} />
+                <axesHelper args={[0.15]} />
+                <BeamCameraRig frame={frame} />
+                <BeamModel
+                  viewMode={viewMode}
+                  selected={isSelected}
+                  xrayProgress={xrayProgress}
+                />
+              </ThreeCanvas>
+            </div>
+          </div>
+
+          {/* Sidebar */}
+          <div
+            style={{
+              width: 560,
+              background: theme.bgSidebar,
+              borderLeft: `1px solid ${theme.borderDefault}`,
+              padding: "24px 28px",
+              opacity: sidebarOpacity,
+              overflowY: "auto",
+            }}
+          >
+            {/* ELEMENTS section */}
             <div
               style={{
-                width: `${leftPct}%`,
-                height: "100%",
-                position: "relative",
-                borderRight: showLeftPanel && leftPct < 100 ? `2px solid ${theme.borderDefault}` : "none",
-                overflow: "hidden",
+                fontSize: 18,
+                fontWeight: 700,
+                color: theme.textTertiary,
+                textTransform: "uppercase",
+                letterSpacing: 2,
+                marginBottom: 14,
               }}
             >
-              {/* Isometric Building */}
-              {showBuildingView && (
-                <div style={{ width: "100%", height: "100%", opacity: frame >= P5_START ? buildingFadeOut : 1 }}>
-                  {leftPct < 100 && (
-                    <div
-                      style={{
-                        padding: "16px 24px",
-                        fontSize: 18,
-                        fontWeight: 600,
-                        textTransform: "uppercase" as const,
-                        letterSpacing: 3,
-                        color: theme.textTertiary,
-                        opacity: interpolate(frame, [P2_START + 70, P2_START + 90], [0, 1], clamp),
-                      }}
-                    >
-                      3D View
-                    </div>
-                  )}
-                  <IsometricBuilding
-                    frame={frame}
-                    highlightPanel={frame >= 40 && frame < P2_START}
-                    scale={frame < P2_START ? 1 : buildingScale}
-                  />
-                </div>
-              )}
-
-              {/* Property Panel (Phase 5) */}
-              {showPropertyPanel && (
-                <div
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    opacity: propPanelIn,
-                    padding: "32px 28px",
-                    background: theme.bgSidebar,
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: 18,
-                      fontWeight: 600,
-                      textTransform: "uppercase" as const,
-                      letterSpacing: 3,
-                      color: theme.textTertiary,
-                      marginBottom: 32,
-                    }}
-                  >
-                    REBAR — VERTICAL FACE A
-                  </div>
-
-                  {[
-                    { label: "Diameter", value: "Ø12" },
-                    { label: "Spacing", value: "spacing" },
-                    { label: "Cover", value: "30 mm" },
-                    { label: "Grade", value: "B500C" },
-                  ].map((row) => (
-                    <div
-                      key={row.label}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        padding: "16px 0",
-                        borderBottom: `1px solid ${theme.borderFaint}`,
-                      }}
-                    >
-                      <span style={{ fontSize: 24, color: theme.textTertiary }}>{row.label}</span>
-                      <div
-                        style={{
-                          background: theme.bgElevated,
-                          border: `2px solid ${row.label === "Spacing" && spacingHighlight ? theme.accent : theme.borderSubtle}`,
-                          borderRadius: 8,
-                          padding: "8px 20px",
-                          fontSize: 24,
-                          color: theme.textPrimary,
-                          fontFamily: theme.fontMono,
-                          minWidth: 120,
-                          textAlign: "center" as const,
-                          position: "relative" as const,
-                        }}
-                      >
-                        {row.value === "spacing" ? (
-                          <>
-                            <span style={{ opacity: spacingOldOpacity }}>200 mm</span>
-                            <span
-                              style={{
-                                position: "absolute",
-                                top: 8,
-                                left: 0,
-                                right: 0,
-                                textAlign: "center",
-                                opacity: spacingNewOpacity,
-                              }}
-                            >
-                              150 mm
-                            </span>
-                          </>
-                        ) : (
-                          row.value
-                        )}
-                      </div>
-                    </div>
-                  ))}
-
-                  {/* Apply button */}
-                  {frame >= 995 && frame < 1020 && (
-                    <div
-                      style={{
-                        marginTop: 24,
-                        padding: "10px 28px",
-                        background: theme.accent,
-                        borderRadius: 8,
-                        textAlign: "center" as const,
-                        fontSize: 22,
-                        color: "white",
-                        fontWeight: 600,
-                        opacity: interpolate(frame, [995, 1000, 1015, 1020], [0, 1, 1, 0.8], clamp),
-                      }}
-                    >
-                      Apply
-                    </div>
-                  )}
-                </div>
-              )}
+              Elements
             </div>
 
-            {/* ── Right Panel (SVG Viewport) ── */}
-            {showRightPanel && (
+            {/* Beam card */}
+            <FadeIn startFrame={40} duration={15} slideY={16}>
               <div
                 style={{
-                  flex: 1,
-                  height: "100%",
-                  position: "relative",
-                  overflow: "hidden",
-                  clipPath: `inset(0 ${100 - rightRevealPct}% 0 0)`,
+                  background: isSelected ? theme.accentGlow : theme.bgElevated,
+                  border: `1px solid ${isSelected ? theme.accent : theme.borderSubtle}`,
+                  borderRadius: 10,
+                  padding: "16px 20px",
+                  marginBottom: 24,
                 }}
               >
-                {/* Grid background */}
                 <div
                   style={{
-                    position: "absolute",
-                    inset: 0,
-                    opacity: 0.04,
-                    backgroundImage:
-                      "linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px)",
-                    backgroundSize: "80px 80px",
-                  }}
-                />
-
-                {/* Toolbar (Phase 4+) */}
-                {showToolbar && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: 56,
-                      background: theme.bgSidebar,
-                      borderBottom: `2px solid ${theme.borderDefault}`,
-                      display: "flex",
-                      alignItems: "center",
-                      padding: "0 16px",
-                      gap: 8,
-                      zIndex: 5,
-                      opacity: toolbarOpacity,
-                    }}
-                  >
-                    {["Select", "Edge Profile", "Embed", "Annotate"].map((btn) => (
-                      <div
-                        key={btn}
-                        style={{
-                          background: btn === "Edge Profile" && edgeBtnActive ? theme.accent : theme.bgElevated,
-                          border: `1px solid ${theme.borderSubtle}`,
-                          padding: "8px 20px",
-                          fontSize: 20,
-                          color: btn === "Edge Profile" && edgeBtnActive ? "white" : theme.textSecondary,
-                          borderRadius: 6,
-                          position: "relative" as const,
-                        }}
-                      >
-                        {btn}
-                        {/* Dropdown */}
-                        {btn === "Edge Profile" && dropdownOpacity > 0 && (
-                          <div
-                            style={{
-                              position: "absolute",
-                              top: "100%",
-                              left: 0,
-                              background: theme.bgElevated,
-                              border: `1px solid ${theme.borderDefault}`,
-                              borderRadius: 8,
-                              boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
-                              opacity: dropdownOpacity,
-                              zIndex: 20,
-                              width: 240,
-                              overflow: "hidden",
-                            }}
-                          >
-                            {["Square", "Chamfer 10×10", "Chamfer 20×20", "Bullnose R15"].map((opt, idx) => (
-                              <div
-                                key={opt}
-                                style={{
-                                  height: 40,
-                                  display: "flex",
-                                  alignItems: "center",
-                                  padding: "0 16px",
-                                  fontSize: 18,
-                                  color: idx === hoverIdx ? theme.textPrimary : theme.textSecondary,
-                                  background: idx === hoverIdx ? theme.bgHover : "transparent",
-                                }}
-                              >
-                                {opt}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* SVG Viewport area */}
-                <div
-                  style={{
-                    position: "absolute",
-                    top: showToolbar ? 56 : 0,
-                    left: 0,
-                    right: 0,
-                    bottom: showChat ? chatBarH : 0,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    padding: 40,
+                    fontSize: 24,
+                    fontWeight: 700,
+                    color: theme.textPrimary,
+                    marginBottom: 4,
                   }}
                 >
-                  {/* Main panel (W-14 or montage) */}
-                  {frame < P7_START && (
-                    <WallPanelSVG
-                      frame={frame}
-                      showRebar={frame >= 450}
-                      rebarCount={rebarCount}
-                      rebarStartFrame={450}
-                      showChamfer={frame >= 780}
-                      chamferProgress={chamferProgress}
-                      spacingLabel={spacingLabel}
-                      showBom={frame >= 1060}
-                      bomWeight={bomWeight}
-                      windowY={windowDragY}
-                      panelId="W-14"
-                    />
-                  )}
-
-                  {/* Montage panels */}
-                  {frame >= P7_START && (
-                    <div style={{ position: "relative", width: "100%", height: "100%" }}>
-                      {/* W-15 */}
-                      <div style={{ position: "absolute", inset: 0, opacity: montageW15Opacity }}>
-                        <WallPanelSVG
-                          frame={frame}
-                          showRebar={true}
-                          rebarCount={16}
-                          rebarStartFrame={0}
-                          showChamfer={true}
-                          chamferProgress={1}
-                          spacingLabel={"Ø12 c/c 150"}
-                          showBom={false}
-                          bomWeight={0}
-                          windowY={320}
-                          panelId="W-15"
-                        />
-                        {/* Correction markers */}
-                        {[
-                          { cx: 400, cy: 200 },
-                          { cx: 600, cy: 450 },
-                          { cx: 350, cy: 600 },
-                        ].map((pos, i) => (
-                          <div
-                            key={i}
-                            style={{
-                              position: "absolute",
-                              left: `${(pos.cx / 1200) * 100}%`,
-                              top: `${(pos.cy / 800) * 100}%`,
-                              width: 32,
-                              height: 32,
-                              borderRadius: "50%",
-                              background: theme.error,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              color: "white",
-                              fontSize: 18,
-                              fontWeight: 700,
-                            }}
-                          >
-                            !
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* W-16 */}
-                      <div style={{ position: "absolute", inset: 0, opacity: montageW16Opacity }}>
-                        <WallPanelSVG
-                          frame={frame}
-                          showRebar={true}
-                          rebarCount={14}
-                          rebarStartFrame={0}
-                          showChamfer={false}
-                          chamferProgress={0}
-                          spacingLabel={"Ø12 c/c 175"}
-                          showBom={false}
-                          bomWeight={0}
-                          windowY={380}
-                          panelId="W-16"
-                        />
-                        <div
-                          style={{
-                            position: "absolute",
-                            left: "42%",
-                            top: "30%",
-                            width: 32,
-                            height: 32,
-                            borderRadius: "50%",
-                            background: theme.error,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            color: "white",
-                            fontSize: 18,
-                            fontWeight: 700,
-                          }}
-                        >
-                          !
-                        </div>
-                      </div>
-
-                      {/* W-17 */}
-                      <div style={{ position: "absolute", inset: 0, opacity: montageW17Opacity }}>
-                        <WallPanelSVG
-                          frame={frame}
-                          showRebar={true}
-                          rebarCount={16}
-                          rebarStartFrame={0}
-                          showChamfer={true}
-                          chamferProgress={1}
-                          spacingLabel={"Ø12 c/c 150"}
-                          showBom={false}
-                          bomWeight={0}
-                          windowY={340}
-                          panelId="W-17"
-                        />
-                        {/* Green checkmark */}
-                        <div
-                          style={{
-                            position: "absolute",
-                            top: "50%",
-                            left: "50%",
-                            transform: `translate(-50%, -50%) scale(${checkScale})`,
-                          }}
-                        >
-                          <svg width="120" height="120" viewBox="0 0 120 120">
-                            <circle cx="60" cy="60" r="56" fill="none" stroke={theme.green} strokeWidth="4" />
-                            <polyline
-                              points="35,60 52,78 85,42"
-                              fill="none"
-                              stroke={theme.green}
-                              strokeWidth="6"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                  Beam B-01
                 </div>
-
-                {/* Montage badges */}
-                {frame >= P7_START && frame < P7_START + 60 && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: showToolbar ? 70 : 16,
-                      right: 16,
-                      background: "rgba(251,191,36,0.12)",
-                      border: "2px solid rgba(251,191,36,0.3)",
-                      borderRadius: 12,
-                      padding: "8px 20px",
-                      fontSize: 20,
-                      fontFamily: theme.fontMono,
-                      color: theme.amber,
-                      opacity: montageW15Opacity,
-                    }}
-                  >
-                    3 CORRECTIONS
-                  </div>
-                )}
-                {frame >= P7_START + 60 && frame < P7_START + 120 && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: showToolbar ? 70 : 16,
-                      right: 16,
-                      background: "rgba(251,191,36,0.08)",
-                      border: "2px solid rgba(251,191,36,0.2)",
-                      borderRadius: 12,
-                      padding: "8px 20px",
-                      fontSize: 20,
-                      fontFamily: theme.fontMono,
-                      color: theme.amber,
-                      opacity: montageW16Opacity,
-                    }}
-                  >
-                    1 CORRECTION
-                  </div>
-                )}
-                {frame >= P7_START + 120 && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: showToolbar ? 70 : 16,
-                      right: 16,
-                      background: theme.greenDim,
-                      border: "2px solid rgba(52,211,153,0.3)",
-                      borderRadius: 12,
-                      padding: "8px 20px",
-                      fontSize: 20,
-                      fontFamily: theme.fontMono,
-                      color: theme.green,
-                      opacity: montageW17Opacity,
-                    }}
-                  >
-                    APPROVED
-                  </div>
-                )}
-
-                {/* AI Generated badge (Phase 2) */}
-                {frame >= 250 && frame < P7_START && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: showToolbar ? 70 : 16,
-                      right: 16,
-                      background: theme.greenDim,
-                      border: "2px solid rgba(52,211,153,0.3)",
-                      borderRadius: 12,
-                      padding: "8px 20px",
-                      fontSize: 22,
-                      fontFamily: theme.fontMono,
-                      color: theme.green,
-                      opacity: badgeOpacity,
-                      zIndex: 6,
-                    }}
-                  >
-                    AI GENERATED — READY FOR REVIEW
-                  </div>
-                )}
-
-                {/* Chat bar (Phase 3-6) */}
-                {showChat && chatBarH > 0 && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      height: chatBarH,
-                      background: theme.bgSurface,
-                      borderTop: `2px solid ${theme.borderDefault}`,
-                      padding: 24,
-                      display: "flex",
-                      flexDirection: "column",
-                      justifyContent: "flex-end",
-                      gap: 16,
-                      overflow: "hidden",
-                    }}
-                  >
-                    {/* User message bubble */}
-                    {frame >= typingStart && (
-                      <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                        <div
-                          style={{
-                            background: theme.accent,
-                            color: "white",
-                            padding: "16px 24px",
-                            borderRadius: "24px 24px 8px 24px",
-                            fontSize: 24,
-                            maxWidth: "80%",
-                            lineHeight: 1.5,
-                          }}
-                        >
-                          <TypeWriter
-                            text={userMsg}
-                            startFrame={typingStart}
-                            charsPerFrame={0.8}
-                            style={{ color: "white" }}
-                            cursorColor="white"
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Thinking / response */}
-                    {frame >= P3_START + 100 && (
-                      <FadeIn startFrame={P3_START + 100} slideY={8}>
-                        <div
-                          style={{
-                            fontSize: 20,
-                            fontFamily: theme.fontMono,
-                            color: theme.textTertiary,
-                            background: theme.bgElevated,
-                            border: `2px solid ${theme.borderSubtle}`,
-                            padding: "10px 18px",
-                            borderRadius: 10,
-                            marginBottom: 8,
-                          }}
-                        >
-                          {thinkingText}
-                        </div>
-                      </FadeIn>
-                    )}
-
-                    {frame >= P3_START + 160 && (
-                      <FadeIn startFrame={P3_START + 160} slideY={6}>
-                        <p style={{ fontSize: 22, color: theme.textSecondary, lineHeight: 1.5, margin: 0 }}>
-                          Added vertical rebar — <strong style={{ color: theme.textPrimary }}>12 bars per face</strong> at 200mm centers, 30mm cover.
-                        </p>
-                      </FadeIn>
-                    )}
-                  </div>
-                )}
-
-                {/* BOM table overlay */}
-                {frame >= 1060 && frame < P7_START && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      bottom: showChat ? chatBarH + 20 : 20,
-                      right: 20,
-                      opacity: bomOpacity,
-                    }}
-                  >
-                    {/* Rendered inside SVG now */}
-                  </div>
-                )}
-
-                {/* Toast notification (Phase 6) */}
-                {frame >= 1200 && frame < P7_START && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      bottom: showChat ? chatBarH + 20 : 20,
-                      right: 20,
-                      background: theme.bgElevated,
-                      borderLeft: `4px solid ${theme.accent}`,
-                      borderRadius: 12,
-                      padding: "20px 24px",
-                      maxWidth: 520,
-                      opacity: toastOpacity,
-                      transform: `translateY(${toastTranslateY}px)`,
-                      zIndex: 15,
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: 14,
-                    }}
-                  >
-                    <div style={{ fontSize: 28, lineHeight: 1 }}>💡</div>
-                    <p style={{ fontSize: 22, color: theme.textSecondary, margin: 0, lineHeight: 1.5 }}>
-                      Correction logged — AI will{" "}
-                      <span style={{ color: theme.textPrimary, fontWeight: 600 }}>apply this pattern</span>{" "}
-                      to similar panels.
-                    </p>
-                  </div>
-                )}
+                <div
+                  style={{
+                    fontSize: 20,
+                    color: theme.textSecondary,
+                    fontFamily: theme.fontMono,
+                  }}
+                >
+                  6000 x 600 x 300
+                </div>
               </div>
-            )}
+            </FadeIn>
 
-            {/* Phase 1: full-width viewport before split */}
-            {!showRightPanel && (
+            {/* PROPERTIES section */}
+            <FadeIn startFrame={55} duration={15} slideY={16}>
               <div
                 style={{
-                  position: "absolute",
-                  top: 88,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
+                  fontSize: 18,
+                  fontWeight: 700,
+                  color: theme.textTertiary,
+                  textTransform: "uppercase",
+                  letterSpacing: 2,
+                  marginBottom: 10,
+                  marginTop: 8,
+                }}
+              >
+                Properties
+              </div>
+
+              <div style={{ marginBottom: 12 }}>
+                <div
+                  style={{
+                    fontSize: 20,
+                    fontWeight: 600,
+                    color: theme.textSecondary,
+                    marginBottom: 6,
+                  }}
+                >
+                  Geometry
+                </div>
+                <PropRow label="Length" value="6000" mono />
+                <PropRow label="Width" value="300" mono />
+                <PropRow label="Depth" value="600" mono />
+              </div>
+
+              <div style={{ marginBottom: 12 }}>
+                <div
+                  style={{
+                    fontSize: 20,
+                    fontWeight: 600,
+                    color: theme.textSecondary,
+                    marginBottom: 6,
+                  }}
+                >
+                  Bottom Rebar
+                </div>
+                <PropRow label="Count" value="3" mono />
+                <PropRow label="Dia" value="Ø20" mono />
+              </div>
+
+              <div style={{ marginBottom: 12 }}>
+                <div
+                  style={{
+                    fontSize: 20,
+                    fontWeight: 600,
+                    color: theme.textSecondary,
+                    marginBottom: 6,
+                  }}
+                >
+                  Stirrups
+                </div>
+                <PropRow label="Spacing" value="200" mono />
+              </div>
+            </FadeIn>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Modal Overlay ──────────────────────────────────────── */}
+      {modalOpacity > 0 && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: `rgba(0, 0, 0, ${0.7 * modalOpacity})`,
+            backdropFilter: `blur(${12 * modalOpacity}px)`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 50,
+            opacity: modalOpacity,
+          }}
+        >
+          <div
+            style={{
+              width: 3600,
+              height: 2000,
+              background: theme.bgApp,
+              borderRadius: 20,
+              border: `1px solid ${theme.borderDefault}`,
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+              boxShadow: "0 40px 120px rgba(0,0,0,0.6)",
+            }}
+          >
+            {/* Modal header */}
+            <div
+              style={{
+                height: 80,
+                background: theme.bgSurface,
+                borderBottom: `1px solid ${theme.borderDefault}`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "0 36px",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 28,
+                  fontWeight: 700,
+                  color: theme.textPrimary,
+                }}
+              >
+                Beam B-01 &mdash; Shop Drawing
+              </span>
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 8,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  overflow: "hidden",
+                  background: theme.bgElevated,
+                  border: `1px solid ${theme.borderSubtle}`,
+                  cursor: "pointer",
                 }}
               >
-                <IsometricBuilding frame={frame} highlightPanel={frame >= 40} />
+                <span
+                  style={{
+                    fontSize: 28,
+                    color: theme.textSecondary,
+                    lineHeight: 1,
+                  }}
+                >
+                  x
+                </span>
               </div>
-            )}
+            </div>
+
+            {/* Modal body */}
+            <div style={{ display: "flex", flex: 1 }}>
+              {/* SVG Drawing area */}
+              <div
+                style={{
+                  flex: 1,
+                  padding: 40,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: theme.bgViewport,
+                }}
+              >
+                <ShopDrawingSVG
+                  spacing={spacingValue}
+                  frame={frame}
+                  animStart={480}
+                />
+              </div>
+
+              {/* Properties panel */}
+              <div
+                style={{
+                  width: 560,
+                  background: theme.bgSidebar,
+                  borderLeft: `1px solid ${theme.borderDefault}`,
+                  padding: "28px 32px",
+                  overflowY: "auto",
+                }}
+              >
+                <PropSection
+                  title="Geometry"
+                  startFrame={490}
+                  frame={frame}
+                >
+                  <PropRow label="Length" value="6000" mono />
+                  <PropRow label="Width" value="300" mono />
+                  <PropRow label="Depth" value="600" mono />
+                  <PropRow label="Cover" value="40" mono />
+                  <PropRow label="Chamfer" value="25" mono />
+                </PropSection>
+
+                <PropSection
+                  title="Bottom Rebar"
+                  startFrame={510}
+                  frame={frame}
+                >
+                  <PropRow label="Count" value="3" mono />
+                  <PropRow label="Dia" value="20" mono />
+                </PropSection>
+
+                <PropSection
+                  title="Top Rebar"
+                  startFrame={525}
+                  frame={frame}
+                >
+                  <PropRow label="Count" value="2" mono />
+                  <PropRow label="Dia" value="16" mono />
+                </PropSection>
+
+                <PropSection
+                  title="Stirrups"
+                  startFrame={540}
+                  frame={frame}
+                >
+                  <PropRow label="Dia" value="10" mono />
+                  <PropRow
+                    label="Spacing"
+                    value={String(spacingValue)}
+                    highlighted={spacingHighlighted}
+                    mono
+                  />
+                  <PropRow label="End spc" value="100" mono />
+                  <PropRow label="End zone" value="1200" mono />
+                </PropSection>
+
+                <PropSection
+                  title="Materials"
+                  startFrame={555}
+                  frame={frame}
+                >
+                  <PropRow label="Concrete" value="C30/37" />
+                  <PropRow label="Steel" value="B500B" />
+                </PropSection>
+              </div>
+            </div>
           </div>
 
-          {/* ── Cursors ── */}
-          {/* Phase 1 cursor */}
-          <Cursor x={p1CursorX} y={p1CursorY} opacity={frame < P2_START ? p1CursorOpacity : 0} />
-
-          {/* Phase 4 cursor */}
-          <Cursor x={p4CursorX} y={p4CursorY} opacity={frame >= 700 && frame < 780 ? p4CursorOpacity : 0} />
-
-          {/* Phase 6 cursor */}
-          <Cursor x={p6CursorX} y={p6CursorY} opacity={frame >= P6_START && frame < P7_START ? p6CursorOpacity : 0} />
+          {/* Toast notification */}
+          {toastOpacity > 0 && (
+            <div
+              style={{
+                position: "absolute",
+                bottom: 160,
+                left: "50%",
+                transform: "translateX(-50%)",
+                background: theme.greenDim,
+                border: `1px solid ${theme.green}`,
+                borderRadius: 10,
+                padding: "14px 32px",
+                opacity: toastOpacity,
+                zIndex: 60,
+              }}
+            >
+              <span
+                style={{
+                  color: theme.green,
+                  fontSize: 24,
+                  fontWeight: 600,
+                  fontFamily: theme.fontUi,
+                }}
+              >
+                Drawing updated
+              </span>
+            </div>
+          )}
         </div>
       )}
 
-      {/* ═══ Phase 8: Stats + End Card ═══ */}
-      {frame >= P8_START && (
+      {/* ── Cursor ─────────────────────────────────────────────── */}
+      <Cursor
+        x={cursorX}
+        y={cursorY}
+        opacity={cursorOpacity}
+        clicking={clicking}
+      />
+
+      {/* ── Stats Phase ────────────────────────────────────────── */}
+      {showStats && (
         <div
           style={{
             position: "absolute",
@@ -1120,126 +1346,213 @@ export const EngineerTheProject: React.FC = () => {
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            opacity: statsTransition * endFadeOut,
+            opacity: statsOpacity,
+            background: theme.bgVoid,
+            zIndex: 70,
           }}
         >
-          {/* Stats */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 40 }}>
-            <FadeIn startFrame={1490} slideY={30}>
-              <div style={{ textAlign: "center" }}>
-                <span style={{ fontSize: 96, fontWeight: 700, color: theme.textPrimary }}>96</span>
-                <span style={{ fontSize: 40, color: theme.textSecondary, marginLeft: 20 }}>panels detailed</span>
-              </div>
-            </FadeIn>
-
-            <FadeIn startFrame={1510} slideY={30}>
-              <div style={{ textAlign: "center" }}>
-                <span style={{ fontSize: 96, fontWeight: 700, color: theme.amber }}>34</span>
-                <span style={{ fontSize: 40, color: theme.textSecondary, marginLeft: 20 }}>required corrections</span>
-              </div>
-            </FadeIn>
-
-            <FadeIn startFrame={1530} slideY={30}>
-              <div style={{ textAlign: "center" }}>
-                <span style={{ fontSize: 96, fontWeight: 700, color: theme.green }}>62</span>
-                <span style={{ fontSize: 40, color: theme.textSecondary, marginLeft: 20 }}>approved as-generated</span>
-              </div>
-            </FadeIn>
-
-            {/* Comparison */}
-            <div style={{ opacity: comparisonFade, marginTop: 24, textAlign: "center" }}>
-              <div style={{ fontSize: 48, color: theme.green, fontWeight: 600, marginBottom: 12 }}>
-                Average time per panel: 4 min
-              </div>
-              <div style={{ fontSize: 36, color: theme.textTertiary, position: "relative", display: "inline-block" }}>
-                Manual baseline:{" "}
-                <span style={{ position: "relative" }}>
-                  45 min
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "50%",
-                      left: -4,
-                      right: -4,
-                      height: 3,
-                      background: theme.textTertiary,
-                    }}
-                  />
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* End card */}
           <div
             style={{
-              opacity: endCardFade,
-              marginTop: 80,
               display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
+              gap: 120,
+              marginBottom: 60,
             }}
           >
-            <div style={{ fontSize: 44, color: theme.textSecondary, marginBottom: 48 }}>
-              Every correction makes the AI smarter.
-            </div>
+            <StatCounter
+              value={96}
+              label="panels detailed"
+              color={theme.textPrimary}
+              startFrame={1290}
+              frame={frame}
+            />
+            <StatCounter
+              value={34}
+              label="required corrections"
+              color={theme.amber}
+              startFrame={1330}
+              frame={frame}
+            />
+            <StatCounter
+              value={62}
+              label="approved as-generated"
+              color={theme.green}
+              startFrame={1370}
+              frame={frame}
+            />
+          </div>
 
-            {/* Progress bar */}
-            {frame >= 1590 && (
-              <div style={{ position: "relative", width: 1200 }}>
-                {/* Bar container */}
+          {/* Time comparison */}
+          <FadeIn startFrame={1420} duration={20} slideY={30}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 60,
+              }}
+            >
+              <div style={{ textAlign: "center" }}>
                 <div
                   style={{
-                    width: 1200,
-                    height: 40,
-                    background: theme.bgElevated,
-                    borderRadius: 20,
-                    overflow: "hidden",
+                    fontSize: 64,
+                    fontWeight: 800,
+                    fontFamily: theme.fontMono,
+                    color: theme.green,
+                  }}
+                >
+                  4 min
+                </div>
+                <div
+                  style={{
+                    fontSize: 26,
+                    color: theme.textSecondary,
+                    marginTop: 6,
+                  }}
+                >
+                  Average time
+                </div>
+              </div>
+              <div
+                style={{
+                  fontSize: 36,
+                  color: theme.textTertiary,
+                  fontWeight: 500,
+                }}
+              >
+                vs
+              </div>
+              <div style={{ textAlign: "center" }}>
+                <div
+                  style={{
+                    fontSize: 64,
+                    fontWeight: 800,
+                    fontFamily: theme.fontMono,
+                    color: theme.textTertiary,
+                    textDecoration: "line-through",
+                    textDecorationColor: theme.error,
+                    textDecorationThickness: 4,
+                  }}
+                >
+                  45 min
+                </div>
+                <div
+                  style={{
+                    fontSize: 26,
+                    color: theme.textTertiary,
+                    marginTop: 6,
+                  }}
+                >
+                  Manual
+                </div>
+              </div>
+            </div>
+          </FadeIn>
+        </div>
+      )}
+
+      {/* ── End Card ───────────────────────────────────────────── */}
+      {showEndCard && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            opacity: endCardOpacity,
+            background: theme.bgVoid,
+            zIndex: 80,
+          }}
+        >
+          <div
+            style={{
+              fontSize: 48,
+              fontWeight: 600,
+              color: theme.textPrimary,
+              fontFamily: theme.fontUi,
+              marginBottom: 60,
+              textAlign: "center",
+            }}
+          >
+            Every correction makes the AI smarter.
+          </div>
+
+          {/* Progress bar */}
+          <div
+            style={{
+              width: 1400,
+              position: "relative",
+            }}
+          >
+            {/* Track */}
+            <div
+              style={{
+                width: "100%",
+                height: 24,
+                background: theme.bgElevated,
+                borderRadius: 12,
+                overflow: "hidden",
+              }}
+            >
+              {/* Fill */}
+              <div
+                style={{
+                  height: "100%",
+                  borderRadius: 12,
+                  background: `linear-gradient(90deg, ${theme.accent}, ${theme.green})`,
+                  width: `${interpolate(
+                    frame,
+                    [1560, 1580, 1600, 1620],
+                    [65, 80, 80, 95],
+                    clamp
+                  )}%`,
+                  transition: "width 0.3s ease",
+                }}
+              />
+            </div>
+
+            {/* Labels */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginTop: 16,
+              }}
+            >
+              {[
+                { label: "Today", pct: "65%" },
+                { label: "Next month", pct: "80%" },
+                { label: "Next year", pct: "95%" },
+              ].map((item, i) => (
+                <div
+                  key={i}
+                  style={{
+                    textAlign: "center",
+                    flex: 1,
                   }}
                 >
                   <div
                     style={{
-                      width: `${barPct}%`,
-                      height: "100%",
-                      background: barColor,
-                      borderRadius: 20,
-                      transition: "none",
-                    }}
-                  />
-                </div>
-
-                {/* Percentage label */}
-                {barPct > 0 && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: -36,
-                      left: `${barPct}%`,
-                      transform: "translateX(-50%)",
-                      fontSize: 24,
-                      fontWeight: 600,
-                      color: theme.textPrimary,
+                      fontSize: 26,
                       fontFamily: theme.fontMono,
+                      color: theme.accent,
+                      fontWeight: 700,
                     }}
                   >
-                    {Math.round(barPct)}%
+                    {item.pct}
                   </div>
-                )}
-
-                {/* Stage labels */}
-                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16, position: "relative" }}>
-                  <div style={{ position: "absolute", left: "65%", transform: "translateX(-50%)", fontSize: 22, color: theme.textTertiary }}>
-                    Today
-                  </div>
-                  <div style={{ position: "absolute", left: "80%", transform: "translateX(-50%)", fontSize: 22, color: theme.textTertiary }}>
-                    Next month
-                  </div>
-                  <div style={{ position: "absolute", left: "95%", transform: "translateX(-50%)", fontSize: 22, color: theme.textTertiary }}>
-                    Next year
+                  <div
+                    style={{
+                      fontSize: 22,
+                      color: theme.textSecondary,
+                      marginTop: 4,
+                    }}
+                  >
+                    {item.label}
                   </div>
                 </div>
-              </div>
-            )}
+              ))}
+            </div>
           </div>
         </div>
       )}
