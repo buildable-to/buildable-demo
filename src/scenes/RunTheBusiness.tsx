@@ -227,22 +227,22 @@ export const RunTheBusiness: React.FC = () => {
   const frame = useCurrentFrame();
 
   const sceneOpacity = interpolate(frame, [0, 20], [0, 1], clamp);
-  const closingFadeOut = interpolate(frame, [1478, 1500], [1, 0], clamp);
-  const chatDim = interpolate(frame, [1410, 1430], [1, 0.2], clamp);
-  const closingOverlayOpacity = interpolate(frame, [1410, 1440], [0, 1], clamp);
+  const closingFadeOut = interpolate(frame, [2580, 2640], [1, 0], clamp);
+  const chatDim = interpolate(frame, [2380, 2410], [1, 0.2], clamp);
+  const closingOverlayOpacity = interpolate(frame, [2380, 2420], [0, 1], clamp);
 
-  // Scroll the chat content
+  // Scroll the chat content — spread across the full 88s
   const scrollY = interpolate(
     frame,
-    [0, 440, 465, 800, 825, 1100, 1125, 1400],
+    [0, 700, 730, 1350, 1380, 1900, 1930, 2380],
     [0, 0, -650, -650, -1400, -1400, -2100, -2100],
     clamp,
   );
 
   // Sidebar KPI pulse frames (when related question is asked)
-  const concretePulse = 260;  // Q1 response arrives
-  const costPulse = 650;       // Q2 response arrives
-  const teamPulse = 990;       // Q3 response arrives
+  const concretePulse = 420;  // Q1 response arrives
+  const costPulse = 1100;      // Q2 response arrives
+  const teamPulse = 1650;      // Q3 response arrives
 
   // Sidebar project progress animations
   const sidebarReveal = interpolate(frame, [0, 30], [0, 1], clamp);
@@ -493,13 +493,13 @@ export const RunTheBusiness: React.FC = () => {
 
               {/* ═══════ Q2: Cost vs Actual ═══════ */}
               <div style={{ marginBottom: 40 }}>
-                <UserBubble text="Compare our cost estimates vs actual costs on completed projects." startFrame={470} />
-                <ThinkingIndicator startFrame={605} doneFrame={640} thinkingText="Comparing project financials..." doneText="Comparison ready" />
+                <UserBubble text="Compare our cost estimates vs actual costs on completed projects." startFrame={730} />
+                <ThinkingIndicator startFrame={865} doneFrame={900} thinkingText="Comparing project financials..." doneText="Comparison ready" />
 
-                {frame >= 645 && (
+                {frame >= 905 && (
                   <div style={{
                     borderLeft: `4px solid ${theme.accentDim}`, padding: "20px 28px", marginBottom: 20,
-                    opacity: interpolate(frame, [645, 655], [0, 1], clamp),
+                    opacity: interpolate(frame, [905, 915], [0, 1], clamp),
                   }}>
                     {/* Legend */}
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
@@ -533,7 +533,7 @@ export const RunTheBusiness: React.FC = () => {
                       ))}
 
                       {costData.map((d, idx) => {
-                        const groupStart = 655 + idx * 12;
+                        const groupStart = 915 + idx * 12;
                         const estH = interpolate(frame, [groupStart, groupStart + 18], [0, (d.estimated / maxBarValue) * 420], clamp);
                         const actH = interpolate(frame, [groupStart + 6, groupStart + 24], [0, (d.actual / maxBarValue) * 420], clamp);
                         const overBudget = d.actual > d.estimated;
@@ -552,7 +552,7 @@ export const RunTheBusiness: React.FC = () => {
                     </div>
 
                     {/* Variance indicator for Kutaisi */}
-                    <FadeIn startFrame={730} duration={15} slideY={8}>
+                    <FadeIn startFrame={990} duration={15} slideY={8}>
                       <div style={{
                         display: "flex", alignItems: "center", gap: 12, marginBottom: 16,
                         background: "rgba(248,113,113,0.08)", border: `1px solid rgba(248,113,113,0.2)`,
@@ -564,7 +564,7 @@ export const RunTheBusiness: React.FC = () => {
                         </div>
                       </div>
                     </FadeIn>
-                    <FadeIn startFrame={760} duration={15} slideY={8}>
+                    <FadeIn startFrame={1020} duration={15} slideY={8}>
                       <div style={{ fontSize: 24, color: theme.textSecondary, lineHeight: 1.5 }}>
                         Recommendation: update seismic rebar ratios from <span style={{ color: theme.green, fontWeight: 600, fontFamily: theme.fontMono }}>85 → 105 kg/m³</span> for zone III.
                       </div>
@@ -575,13 +575,13 @@ export const RunTheBusiness: React.FC = () => {
 
               {/* ═══════ Q3: Engineer Productivity ═══════ */}
               <div style={{ marginBottom: 40 }}>
-                <UserBubble text="Which engineer is most productive this month?" startFrame={830} />
-                <ThinkingIndicator startFrame={945} doneFrame={980} thinkingText="Analyzing performance data..." doneText="Report ready" />
+                <UserBubble text="Which engineer is most productive this month?" startFrame={1380} />
+                <ThinkingIndicator startFrame={1495} doneFrame={1530} thinkingText="Analyzing performance data..." doneText="Report ready" />
 
-                {frame >= 985 && (
+                {frame >= 1535 && (
                   <div style={{
                     borderLeft: `4px solid ${theme.accentDim}`, padding: "20px 28px", marginBottom: 20,
-                    opacity: interpolate(frame, [985, 995], [0, 1], clamp),
+                    opacity: interpolate(frame, [1535, 1545], [0, 1], clamp),
                   }}>
                     <div style={{ fontSize: 20, color: theme.textTertiary, textTransform: "uppercase", letterSpacing: 2, marginBottom: 20 }}>
                       Engineer Performance — March 2026
@@ -590,7 +590,7 @@ export const RunTheBusiness: React.FC = () => {
                     {/* Engineer Cards */}
                     <div style={{ display: "flex", gap: 24, marginBottom: 24 }}>
                       {engineers.map((eng, idx) => {
-                        const cardStart = 990 + idx * 12;
+                        const cardStart = 1540 + idx * 12;
                         const cardOp = interpolate(frame, [cardStart, cardStart + 15], [0, 1], clamp);
                         const panelBar = interpolate(frame, [cardStart + 8, cardStart + 28], [0, (eng.panels / 127) * 100], clamp);
                         const ringColor = eng.autoApprove >= 70 ? theme.green : eng.autoApprove >= 65 ? theme.amber : theme.accent;
@@ -650,7 +650,7 @@ export const RunTheBusiness: React.FC = () => {
                       })}
                     </div>
 
-                    <FadeIn startFrame={1060} duration={18} slideY={8}>
+                    <FadeIn startFrame={1610} duration={18} slideY={8}>
                       <div style={{ fontSize: 24, color: theme.textSecondary, lineHeight: 1.6 }}>
                         Nika&apos;s higher auto-approve rate correlates with consistent use of standard edge profiles. Dato&apos;s corrections are primarily dimension adjustments — suggest <span style={{ color: theme.textPrimary, fontWeight: 500 }}>standardizing dimension templates</span>.
                       </div>
@@ -661,13 +661,13 @@ export const RunTheBusiness: React.FC = () => {
 
               {/* ═══════ Q4: Capacity Planning ═══════ */}
               <div style={{ marginBottom: 40 }}>
-                <UserBubble text="Can we take on the Zugdidi school project? We quoted 45 days." startFrame={1130} />
-                <ThinkingIndicator startFrame={1245} doneFrame={1280} thinkingText="Calculating team capacity..." doneText="Analysis complete" />
+                <UserBubble text="Can we take on the Zugdidi school project? We quoted 45 days." startFrame={1930} />
+                <ThinkingIndicator startFrame={2045} doneFrame={2080} thinkingText="Calculating team capacity..." doneText="Analysis complete" />
 
-                {frame >= 1285 && (
+                {frame >= 2085 && (
                   <div style={{
                     borderLeft: `4px solid ${theme.accentDim}`, padding: "20px 28px", marginBottom: 20,
-                    opacity: interpolate(frame, [1285, 1295], [0, 1], clamp),
+                    opacity: interpolate(frame, [2085, 2095], [0, 1], clamp),
                   }}>
                     {/* Key metrics cards */}
                     <div style={{ display: "flex", gap: 16, marginBottom: 24 }}>
@@ -676,7 +676,7 @@ export const RunTheBusiness: React.FC = () => {
                         { label: "Zugdidi Scope", value: "340 elements", icon: "🏗" },
                         { label: "Detailing Time", value: "9 work days", icon: "📅" },
                       ].map((card, i) => (
-                        <FadeIn key={card.label} startFrame={1288 + i * 8} duration={12} slideY={6}>
+                        <FadeIn key={card.label} startFrame={2088 + i * 8} duration={12} slideY={6}>
                           <div style={{
                             background: theme.bgElevated, border: `1px solid ${theme.borderSubtle}`,
                             borderRadius: 12, padding: "16px 20px", width: 280,
@@ -688,14 +688,14 @@ export const RunTheBusiness: React.FC = () => {
                       ))}
                     </div>
 
-                    <FadeIn startFrame={1320} duration={12} slideY={6}>
+                    <FadeIn startFrame={2120} duration={12} slideY={6}>
                       <div style={{ fontSize: 24, color: theme.textSecondary, lineHeight: 1.6, marginBottom: 12 }}>
                         Team is <span style={{ color: theme.amber, fontWeight: 600 }}>60% allocated</span> to Batumi Hotel (completion: <span style={{ color: theme.textPrimary, fontWeight: 600 }}>April 18</span>). Realistic Zugdidi start: <span style={{ color: theme.textPrimary, fontWeight: 600 }}>April 21</span>.
                       </div>
                     </FadeIn>
 
                     {/* Gantt Timeline */}
-                    {frame >= 1335 && (() => {
+                    {frame >= 2135 && (() => {
                       const totalDays = 44;
                       const tlW = 1800;
                       const dayToX = (day: number) => (day / totalDays) * tlW;
@@ -704,11 +704,11 @@ export const RunTheBusiness: React.FC = () => {
                         { label: "Apr 18", day: 17 }, { label: "Apr 21", day: 20 },
                         { label: "May 2", day: 31 }, { label: "May 15", day: 44 },
                       ];
-                      const batumiScale = interpolate(frame, [1340, 1365], [0, 1], clamp);
-                      const zugdidiScale = interpolate(frame, [1355, 1380], [0, 1], clamp);
-                      const bufferOp = interpolate(frame, [1370, 1385], [0, 1], clamp);
+                      const batumiScale = interpolate(frame, [2140, 2165], [0, 1], clamp);
+                      const zugdidiScale = interpolate(frame, [2155, 2180], [0, 1], clamp);
+                      const bufferOp = interpolate(frame, [2170, 2185], [0, 1], clamp);
                       return (
-                        <div style={{ marginTop: 16, width: tlW, position: "relative", height: 200, opacity: interpolate(frame, [1335, 1345], [0, 1], clamp) }}>
+                        <div style={{ marginTop: 16, width: tlW, position: "relative", height: 200, opacity: interpolate(frame, [2135, 2145], [0, 1], clamp) }}>
                           {/* Timeline axis */}
                           <div style={{ position: "absolute", top: 28, left: 0, right: 0, height: 1, background: theme.borderDefault }} />
                           {markers.map((m) => (
@@ -755,7 +755,7 @@ export const RunTheBusiness: React.FC = () => {
                     })()}
 
                     {/* Recommendation pill */}
-                    <FadeIn startFrame={1390} duration={12} slideY={6} style={{ marginTop: 28 }}>
+                    <FadeIn startFrame={2190} duration={12} slideY={6} style={{ marginTop: 28 }}>
                       <div style={{
                         display: "inline-flex", alignItems: "center", gap: 10,
                         background: theme.greenDim, color: theme.green, fontSize: 26, fontWeight: 600,
@@ -770,18 +770,18 @@ export const RunTheBusiness: React.FC = () => {
             </div>
 
             {/* ──── Closing Overlay ──── */}
-            {frame >= 1410 && (
+            {frame >= 2380 && (
               <div style={{
                 position: "absolute", inset: 0, display: "flex", flexDirection: "column",
                 alignItems: "center", justifyContent: "center", opacity: closingOverlayOpacity,
                 zIndex: 20, background: `rgba(10,10,12,0.85)`,
               }}>
-                <FadeIn startFrame={1435} duration={18} slideY={14}>
+                <FadeIn startFrame={2410} duration={18} slideY={14}>
                   <div style={{ fontSize: 48, color: theme.textPrimary, fontWeight: 300, textAlign: "center", maxWidth: 2000, lineHeight: 1.5 }}>
                     Every project, every panel, every correction — all connected.
                   </div>
                 </FadeIn>
-                <FadeIn startFrame={1458} duration={18} slideY={14}>
+                <FadeIn startFrame={2440} duration={18} slideY={14}>
                   <div style={{ fontSize: 34, color: theme.textSecondary, textAlign: "center", maxWidth: 2000, marginTop: 20, lineHeight: 1.5 }}>
                     Your AI analyst doesn&apos;t forget, doesn&apos;t guess, and gets smarter every quarter.
                   </div>

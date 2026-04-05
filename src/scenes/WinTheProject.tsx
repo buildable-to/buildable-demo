@@ -16,19 +16,19 @@ const BuildingCameraRig: React.FC<{ frame: number }> = ({ frame }) => {
 
   const angle = interpolate(
     frame,
-    [450, 750, 1140, 1500],
-    [Math.PI * 0.25, Math.PI * 0.7, Math.PI * 1.5, Math.PI * 1.8],
+    [450, 750, 1140, 1700],
+    [Math.PI * 0.25, Math.PI * 0.7, Math.PI * 1.5, Math.PI * 2.0],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
   );
   const elevation = interpolate(
     frame,
-    [450, 600, 900, 1140, 1500],
+    [450, 600, 900, 1140, 1700],
     [0.6, 0.35, 0.25, 0.35, 0.4],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
   );
   const distance = interpolate(
     frame,
-    [450, 600, 900, 1140, 1260, 1500],
+    [450, 600, 900, 1140, 1260, 1700],
     [5.0, 3.5, 2.8, 3.0, 3.0, 3.2],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
   );
@@ -217,13 +217,13 @@ export const WinTheProject: React.FC = () => {
   });
 
   // Phase 7: Everything fades out, closing text
-  const allFadeOut = interpolate(frame, [1500, 1520], [1, 0], {
+  const allFadeOut = interpolate(frame, [1680, 1710], [1, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
   const closingOpacity =
-    interpolate(frame, [1530, 1545], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }) *
-    interpolate(frame, [1628, 1650], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+    interpolate(frame, [1720, 1740], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }) *
+    interpolate(frame, [1860, 1890], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
 
   // Generate button
   const generateBtnOpacity = interpolate(frame, [240, 255], [0, 1], {
@@ -279,9 +279,9 @@ export const WinTheProject: React.FC = () => {
   // Show loading (phase 3)
   const showLoading = frame >= 300 && frame < 450;
   // Show viewport (phase 4-6)
-  const showViewport = frame >= 450 && frame < 1520;
+  const showViewport = frame >= 450 && frame < 1710;
   // Show closing (phase 7)
-  const showClosing = frame >= 1520;
+  const showClosing = frame >= 1710;
 
   return (
     <div
@@ -822,7 +822,7 @@ export const WinTheProject: React.FC = () => {
           {/* ============================================================== */}
           {/* PHASE 6: Quick Edit Overlay                                    */}
           {/* ============================================================== */}
-          {frame >= 1260 && frame < 1500 && (
+          {frame >= 1260 && frame < 1680 && (
             <div
               style={{
                 position: "absolute",
@@ -912,7 +912,7 @@ export const WinTheProject: React.FC = () => {
             opacity: closingOpacity,
           }}
         >
-          <FadeIn startFrame={1530} duration={30} slideY={30}>
+          <FadeIn startFrame={1720} duration={30} slideY={30}>
             <div
               style={{
                 fontSize: 96,
@@ -924,7 +924,7 @@ export const WinTheProject: React.FC = () => {
               You won the project.
             </div>
           </FadeIn>
-          <FadeIn startFrame={1560} duration={30} slideY={20}>
+          <FadeIn startFrame={1760} duration={30} slideY={20}>
             <div
               style={{
                 fontSize: 52,
