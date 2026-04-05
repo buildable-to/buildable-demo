@@ -205,7 +205,7 @@ const WallPanelSVG: React.FC<{
           </text>
           <line x1={900} y1={630} x2={1160} y2={630} stroke={theme.borderDefault} strokeWidth={1} />
           <text x={900} y={655} fill={theme.textSecondary} fontSize={14} fontFamily={theme.fontMono}>
-            {`\u00D812 \u2014 32 pcs \u2014 L=3450mm \u2014 ${Math.round(bomWeight)} kg`}
+            {`Ø12 — 32 pcs — L=3450mm — ${Math.round(bomWeight)} kg`}
           </text>
         </g>
       )}
@@ -344,7 +344,7 @@ export const EngineerTheProject: React.FC = () => {
 
   // ── Phase 3: chat bar ─────────────────────────────────────────────
   const chatBarH = interpolate(frame, [P3_START, P3_START + 20], [0, 300], clamp);
-  const userMsg = "Add \u00D812 vertical rebar at 200mm spacing, 30mm cover, both faces.";
+  const userMsg = "Add Ø12 vertical rebar at 200mm spacing, 30mm cover, both faces.";
   const typingStart = P3_START + 10;
   const thinkingText =
     frame < P3_START + 140
@@ -375,7 +375,7 @@ export const EngineerTheProject: React.FC = () => {
   const spacingNewOpacity = frame < 970 ? 0 : interpolate(frame, [970, 990], [0, 1], clamp);
 
   const rebarCount = frame < P5_START + 120 ? 12 : 16;
-  const spacingLabel = frame < P5_START + 120 ? "\u00D812 c/c 200" : "\u00D812 c/c 150";
+  const spacingLabel = frame < P5_START + 120 ? "Ø12 c/c 200" : "Ø12 c/c 150";
 
   const bomOpacity = interpolate(frame, [1060, 1080], [0, 1], clamp);
   const bomWeight = interpolate(frame, [1060, 1100], [82, 108], clamp);
@@ -552,7 +552,7 @@ export const EngineerTheProject: React.FC = () => {
                   </div>
 
                   {[
-                    { label: "Diameter", value: "\u00D812" },
+                    { label: "Diameter", value: "Ø12" },
                     { label: "Spacing", value: "spacing" },
                     { label: "Cover", value: "30 mm" },
                     { label: "Grade", value: "B500C" },
@@ -700,7 +700,7 @@ export const EngineerTheProject: React.FC = () => {
                               overflow: "hidden",
                             }}
                           >
-                            {["Square", "Chamfer 10\u00D710", "Chamfer 20\u00D720", "Bullnose R15"].map((opt, idx) => (
+                            {["Square", "Chamfer 10×10", "Chamfer 20×20", "Bullnose R15"].map((opt, idx) => (
                               <div
                                 key={opt}
                                 style={{
@@ -766,7 +766,7 @@ export const EngineerTheProject: React.FC = () => {
                           rebarStartFrame={0}
                           showChamfer={true}
                           chamferProgress={1}
-                          spacingLabel={"\u00D812 c/c 150"}
+                          spacingLabel={"Ø12 c/c 150"}
                           showBom={false}
                           bomWeight={0}
                           windowY={320}
@@ -810,7 +810,7 @@ export const EngineerTheProject: React.FC = () => {
                           rebarStartFrame={0}
                           showChamfer={false}
                           chamferProgress={0}
-                          spacingLabel={"\u00D812 c/c 175"}
+                          spacingLabel={"Ø12 c/c 175"}
                           showBom={false}
                           bomWeight={0}
                           windowY={380}
@@ -846,7 +846,7 @@ export const EngineerTheProject: React.FC = () => {
                           rebarStartFrame={0}
                           showChamfer={true}
                           chamferProgress={1}
-                          spacingLabel={"\u00D812 c/c 150"}
+                          spacingLabel={"Ø12 c/c 150"}
                           showBom={false}
                           bomWeight={0}
                           windowY={340}

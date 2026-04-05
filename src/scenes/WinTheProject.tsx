@@ -1,23 +1,12 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 import { useCurrentFrame, interpolate, staticFile, Img } from "remotion";
 import { ThreeCanvas } from "@remotion/three";
+import { useGLTF } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { FadeIn } from "../components/FadeIn";
 import { TypeWriter } from "../components/TypeWriter";
 import { theme } from "../theme";
-
-// ---------------------------------------------------------------------------
-// Pre-create materials (module-level, never re-created per frame)
-// ---------------------------------------------------------------------------
-const BUILDING_MATERIALS = {
-  wallPanel: new THREE.MeshStandardMaterial({ color: 0xc8c8c8, roughness: 0.8, metalness: 0.05 }),
-  slab: new THREE.MeshStandardMaterial({ color: 0x87ceeb, roughness: 0.6, metalness: 0.1, transparent: true, opacity: 0.85 }),
-  column: new THREE.MeshStandardMaterial({ color: 0x505050, roughness: 0.7, metalness: 0.15 }),
-  stairCore: new THREE.MeshStandardMaterial({ color: 0xff8c42, roughness: 0.7, metalness: 0.1 }),
-  beam: new THREE.MeshStandardMaterial({ color: 0x808080, roughness: 0.7, metalness: 0.1 }),
-  ground: new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.95, metalness: 0 }),
-};
 
 // ---------------------------------------------------------------------------
 // BuildingCameraRig
@@ -49,144 +38,44 @@ const BuildingCameraRig: React.FC<{ frame: number }> = ({ frame }) => {
     elevation * distance,
     Math.sin(angle) * distance,
   );
-  camera.lookAt(0, 0.3, 0);
+  camera.lookAt(0, 0.5, 0);
   camera.updateProjectionMatrix();
 
   return null;
 };
 
 // ---------------------------------------------------------------------------
-// ProceduralBuilding
+// BuildingModel — loads real GLB model (same pattern as WarehouseScene)
 // ---------------------------------------------------------------------------
-const ProceduralBuilding: React.FC<{ upperFloorH: number }> = ({ upperFloorH }) => {
-  const footprintX = 18;
-  const footprintZ = 30;
-  const groundFloorH = 4;
-  const wallThickness = 0.2;
-  const slabThickness = 0.265;
-  const columnSize = 0.4;
+const BuildingModel: React.FC = () => {
+  const glb = useGLTF(staticFile("assets/building-3d.glb"));
 
-  const meshes = useMemo(() => {
-    const items: {
-      key: string;
-      geo: [number, number, number];
-      pos: [number, number, number];
-      mat: THREE.MeshStandardMaterial;
-    }[] = [];
+  const { clonedScene, scale, offset } = useMemo(() => {
+    const cloned = glb.scene.clone(true);
+    const box = new THREE.Box3().setFromObject(cloned);
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const s = 2.5 / maxDim;
+    return {
+      clonedScene: cloned,
+      scale: s,
+      offset: new THREE.Vector3(-center.x * s, -box.min.y * s, -center.z * s),
+    };
+  }, [glb.scene]);
 
-    const totalHeight = groundFloorH + 4 * upperFloorH;
-    const ox = -footprintX / 2;
-    const oz = -footprintZ / 2;
-    const scale = 2.5 / 30;
-
-    // Ground slab
-    items.push({
-      key: "ground-slab",
-      geo: [footprintX, slabThickness, footprintZ],
-      pos: [(ox + footprintX / 2) * scale, 0, (oz + footprintZ / 2) * scale],
-      mat: BUILDING_MATERIALS.slab,
-    });
-
-    // Floor slabs (4 upper floors + roof = 5)
-    for (let i = 1; i <= 5; i++) {
-      const y = groundFloorH + (i - 1) * upperFloorH;
-      items.push({
-        key: `floor-slab-${i}`,
-        geo: [footprintX, slabThickness, footprintZ],
-        pos: [(ox + footprintX / 2) * scale, y * scale, (oz + footprintZ / 2) * scale],
-        mat: BUILDING_MATERIALS.slab,
-      });
-    }
-
-    // Wall panels per floor
-    const floorHeights = [groundFloorH, upperFloorH, upperFloorH, upperFloorH, upperFloorH];
-    let yBase = 0;
-    for (let f = 0; f < 5; f++) {
-      const fh = floorHeights[f];
-      const yCenter = yBase + fh / 2;
-
-      // Front wall (z=0)
-      items.push({
-        key: `wall-front-${f}`,
-        geo: [footprintX, fh, wallThickness],
-        pos: [(ox + footprintX / 2) * scale, yCenter * scale, (oz + 0) * scale],
-        mat: BUILDING_MATERIALS.wallPanel,
-      });
-      // Back wall (z=footprintZ)
-      items.push({
-        key: `wall-back-${f}`,
-        geo: [footprintX, fh, wallThickness],
-        pos: [(ox + footprintX / 2) * scale, yCenter * scale, (oz + footprintZ) * scale],
-        mat: BUILDING_MATERIALS.wallPanel,
-      });
-      // Left wall (x=0)
-      items.push({
-        key: `wall-left-${f}`,
-        geo: [wallThickness, fh, footprintZ],
-        pos: [(ox + 0) * scale, yCenter * scale, (oz + footprintZ / 2) * scale],
-        mat: BUILDING_MATERIALS.wallPanel,
-      });
-      // Right wall (x=footprintX)
-      items.push({
-        key: `wall-right-${f}`,
-        geo: [wallThickness, fh, footprintZ],
-        pos: [(ox + footprintX) * scale, yCenter * scale, (oz + footprintZ / 2) * scale],
-        mat: BUILDING_MATERIALS.wallPanel,
-      });
-      yBase += fh;
-    }
-
-    // Columns at ground floor (4m height) — grid at 6m spacing
-    const colXPositions = [3, 6, 9, 12, 15];
-    const colZPositions = [5, 10, 15, 20, 25];
-    for (const cx of colXPositions) {
-      for (const cz of colZPositions) {
-        items.push({
-          key: `col-${cx}-${cz}`,
-          geo: [columnSize, groundFloorH, columnSize],
-          pos: [(ox + cx) * scale, (groundFloorH / 2) * scale, (oz + cz) * scale],
-          mat: BUILDING_MATERIALS.column,
-        });
+  useEffect(() => {
+    clonedScene.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
       }
-    }
-
-    // Stair cores — 2 tall boxes
-    items.push({
-      key: "stair-core-1",
-      geo: [3, totalHeight, 4],
-      pos: [(ox + 3) * scale, (totalHeight / 2) * scale, (oz + 7) * scale],
-      mat: BUILDING_MATERIALS.stairCore,
     });
-    items.push({
-      key: "stair-core-2",
-      geo: [3, totalHeight, 4],
-      pos: [(ox + 15) * scale, (totalHeight / 2) * scale, (oz + 23) * scale],
-      mat: BUILDING_MATERIALS.stairCore,
-    });
-
-    // Ground plane
-    items.push({
-      key: "ground-plane",
-      geo: [60, 0.1, 60],
-      pos: [0, -0.05 * scale, 0],
-      mat: BUILDING_MATERIALS.ground,
-    });
-
-    return { items, scale };
-  }, [upperFloorH]);
+  }, [clonedScene]);
 
   return (
-    <group>
-      {meshes.items.map((m) => (
-        <mesh
-          key={m.key}
-          position={m.pos}
-          material={m.mat}
-          scale={[meshes.scale, meshes.scale, meshes.scale]}
-        >
-          <boxGeometry args={m.geo} />
-        </mesh>
-      ))}
+    <group scale={[scale, scale, scale]} position={[offset.x, offset.y, offset.z]}>
+      <primitive object={clonedScene} />
     </group>
   );
 };
@@ -195,26 +84,18 @@ const ProceduralBuilding: React.FC<{ upperFloorH: number }> = ({ upperFloorH }) 
 // Main scene
 // ---------------------------------------------------------------------------
 const SPEC_TEXT =
-  "5-story residential building, 18\u00D730m footprint, precast sandwich wall panels 200mm, hollow core slabs 265mm, C30/37 concrete, 3m floor height, 2 stairwells, ground floor with 4m commercial space height";
+  "5-story residential building, 18×30m footprint, precast sandwich wall panels 200mm, hollow core slabs 265mm, C30/37 concrete, 3m floor height, 2 stairwells, ground floor with 4m commercial space height";
 
 const STRUCTURAL_ROWS = [
-  { name: "Wall Panels", count: "96 pcs", volume: "412 m\u00B3 concrete" },
-  { name: "Hollow Core", count: "180 pcs", volume: "286 m\u00B3 concrete" },
-  { name: "Columns", count: "24 pcs", volume: "38 m\u00B3 concrete" },
-  { name: "Beams", count: "60 pcs", volume: "54 m\u00B3 concrete" },
-  { name: "Stairs", count: "4 flights", volume: "12 m\u00B3 concrete" },
+  { name: "Wall Panels", count: "96 pcs", volume: "412 m³ concrete" },
+  { name: "Hollow Core", count: "180 pcs", volume: "286 m³ concrete" },
+  { name: "Columns", count: "24 pcs", volume: "38 m³ concrete" },
+  { name: "Beams", count: "60 pcs", volume: "54 m³ concrete" },
+  { name: "Stairs", count: "4 flights", volume: "12 m³ concrete" },
 ];
 
 export const WinTheProject: React.FC = () => {
   const frame = useCurrentFrame();
-
-  // ---------------------------------------------------------------------------
-  // upperFloorH — drives the quick-edit demo
-  // ---------------------------------------------------------------------------
-  const upperFloorH = interpolate(frame, [1310, 1380], [3.0, 3.2], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
 
   // Animated cost values (change during quick edit)
   const concreteTotalAnimated = interpolate(frame, [1350, 1440], [802, 835], {
@@ -567,7 +448,7 @@ export const WinTheProject: React.FC = () => {
               <hemisphereLight args={["#b1e1ff", "#b97a20", 0.25]} />
               <BuildingCameraRig frame={frame} />
               <group scale={[buildingScale, buildingScale, buildingScale]}>
-                <ProceduralBuilding upperFloorH={upperFloorH} />
+                <BuildingModel />
               </group>
             </ThreeCanvas>
           </div>
@@ -710,7 +591,7 @@ export const WinTheProject: React.FC = () => {
                       >
                         <span>Total Concrete</span>
                         <span style={{ fontFamily: theme.fontMono, color: theme.green, fontWeight: 600 }}>
-                          {val.toLocaleString()} m\u00B3
+                          {val.toLocaleString()} m³
                         </span>
                       </div>
                     );
@@ -776,7 +657,7 @@ export const WinTheProject: React.FC = () => {
                       >
                         <span>Insulation</span>
                         <span style={{ fontFamily: theme.fontMono, color: theme.textPrimary }}>
-                          {val.toLocaleString()} m\u00B2
+                          {val.toLocaleString()} m²
                         </span>
                       </div>
                     );
@@ -836,7 +717,7 @@ export const WinTheProject: React.FC = () => {
                           color: theme.green,
                         }}
                       >
-                        \u20AC{costVal.toLocaleString()}
+                        €{costVal.toLocaleString()}
                       </span>
                     </div>
                     <div
@@ -848,9 +729,9 @@ export const WinTheProject: React.FC = () => {
                         color: theme.textTertiary,
                       }}
                     >
-                      <span>Per m\u00B2 (2,700 m\u00B2)</span>
+                      <span>Per m² (2,700 m²)</span>
                       <span style={{ fontFamily: theme.fontMono }}>
-                        \u20AC{perSqm}/m\u00B2
+                        €{perSqm}/m²
                       </span>
                     </div>
                   </div>
@@ -887,7 +768,7 @@ export const WinTheProject: React.FC = () => {
                 }}
               >
                 5-story residential building{"\n"}
-                18\u00D730m footprint{"\n"}
+                18×30m footprint{"\n"}
                 precast sandwich wall panels 200mm{"\n"}
                 hollow core slabs 265mm{"\n"}
                 C30/37 concrete{"\n"}
