@@ -1,5 +1,5 @@
-import React, { useMemo, useEffect } from "react";
-import { useCurrentFrame, interpolate, staticFile, Img } from "remotion";
+import React, { useMemo, useEffect, useState } from "react";
+import { useCurrentFrame, interpolate, staticFile, Img, continueRender, delayRender } from "remotion";
 import { ThreeCanvas } from "@remotion/three";
 import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
@@ -290,12 +290,9 @@ const Cursor: React.FC<{ x: number; y: number; opacity: number; clicking?: boole
   </svg>
 );
 
-// ── SVG Shop Drawing ────────────────────────────────────────────────
-const ShopDrawingSVG: React.FC<{ spacing: number; frame: number; animStart: number }> = ({
-  spacing,
-  frame,
-  animStart,
-}) => {
+// @ts-ignore — removed inline ShopDrawingSVG, now loading real SVG asset
+void function _removed() {
+  const spacing = 200, frame = 0, animStart = 0; void spacing; void frame; void animStart;
   // ── Coordinate system (mm → SVG units, scale ~1:4) ──
   const s = 0.16; // scale factor: 1mm → 0.16 SVG units
   const ox = 80;  // elevation view origin X
@@ -734,6 +731,20 @@ const StatCounter: React.FC<{
 // ════════════════════════════════════════════════════════════════════
 export const EngineerTheProject: React.FC = () => {
   const frame = useCurrentFrame();
+
+  // ── Load real SVG shop drawing ─────────────────────────────────
+  const [svgContent, setSvgContent] = useState<string>("");
+  const [handle] = useState(() => delayRender("Loading beam SVG"));
+
+  useEffect(() => {
+    fetch(staticFile("assets/beam-drawing.svg"))
+      .then((res) => res.text())
+      .then((text) => {
+        setSvgContent(text);
+        continueRender(handle);
+      })
+      .catch(() => continueRender(handle));
+  }, [handle]);
 
   // ── Derived animation state ─────────────────────────────────────
   const uiOpacity = interpolate(frame, [0, 30], [0, 1], clamp);
@@ -1278,11 +1289,19 @@ export const EngineerTheProject: React.FC = () => {
                   background: theme.bgViewport,
                 }}
               >
-                <ShopDrawingSVG
-                  spacing={spacingValue}
-                  frame={frame}
-                  animStart={480}
-                />
+                {svgContent && (
+                  <div
+                    style={{
+                      width: "95%",
+                      height: "90%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      opacity: interpolate(frame, [480, 520], [0, 1], clamp),
+                    }}
+                    dangerouslySetInnerHTML={{ __html: svgContent }}
+                  />
+                )}
               </div>
 
               {/* Properties panel */}
