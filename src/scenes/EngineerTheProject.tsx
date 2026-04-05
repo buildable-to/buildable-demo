@@ -753,7 +753,7 @@ export const EngineerTheProject: React.FC = () => {
 
   // ── Derived animation state ─────────────────────────────────────
   const uiOpacity = interpolate(frame, [0, 30], [0, 1], clamp);
-  const uiFadeOut = interpolate(frame, [1200, 1280], [1, 0], clamp);
+  const uiFadeOut = interpolate(frame, [1150, 1230], [1, 0], clamp);
   const editorVisible = uiOpacity * uiFadeOut;
 
   // View mode
@@ -792,15 +792,15 @@ export const EngineerTheProject: React.FC = () => {
         interpolate(frame, [1080, 1100], [1, 0], clamp)
       : 0;
 
-  // Stats phase
-  const showStats = frame >= 1280;
-  const statsOpacity = interpolate(frame, [1280, 1310], [0, 1], clamp) *
-    interpolate(frame, [1540, 1560], [1, 0], clamp);
+  // Stats phase — "96 panels detailed..." ~40-60s (frames 1200-1800)
+  const showStats = frame >= 1230;
+  const statsOpacity = interpolate(frame, [1230, 1260], [0, 1], clamp) *
+    interpolate(frame, [1780, 1810], [1, 0], clamp);
 
-  // End card
-  const showEndCard = frame >= 1550;
-  const endCardOpacity = interpolate(frame, [1550, 1580], [0, 1], clamp) *
-    interpolate(frame, [1630, 1650], [1, 0], clamp);
+  // End card — "Every correction makes the AI smarter..." ~60-75s (frames 1800-2250)
+  const showEndCard = frame >= 1800;
+  const endCardOpacity = interpolate(frame, [1800, 1830], [0, 1], clamp) *
+    interpolate(frame, [2200, 2250], [1, 0], clamp);
 
   // ── Cursor position ─────────────────────────────────────────────
   // Toolbar button positions (approximate)
@@ -1442,27 +1442,27 @@ export const EngineerTheProject: React.FC = () => {
               value={96}
               label="panels detailed"
               color={theme.textPrimary}
-              startFrame={1290}
+              startFrame={1240}
               frame={frame}
             />
             <StatCounter
               value={34}
               label="required corrections"
               color={theme.amber}
-              startFrame={1330}
+              startFrame={1300}
               frame={frame}
             />
             <StatCounter
               value={62}
               label="approved as-generated"
               color={theme.green}
-              startFrame={1370}
+              startFrame={1360}
               frame={frame}
             />
           </div>
 
           {/* Time comparison */}
-          <FadeIn startFrame={1420} duration={20} slideY={30}>
+          <FadeIn startFrame={1450} duration={20} slideY={30}>
             <div
               style={{
                 display: "flex",
@@ -1582,7 +1582,7 @@ export const EngineerTheProject: React.FC = () => {
                   background: `linear-gradient(90deg, ${theme.accent}, ${theme.green})`,
                   width: `${interpolate(
                     frame,
-                    [1560, 1580, 1600, 1620],
+                    [1830, 1920, 2000, 2100],
                     [65, 80, 80, 95],
                     clamp
                   )}%`,
